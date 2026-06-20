@@ -394,8 +394,7 @@ export default function DemoAdminDashboard() {
           <div className="space-y-4">
             <Input placeholder="First Name" />
             <Input placeholder="Last Name" />
-            <Input placeholder="Email" type="email" />
-            <Input placeholder="Phone" />
+            <Input placeholder="Phone (Optional)" />
             <select className="w-full border border-gray-300 rounded px-3 py-2">
               <option>Select Class</option>
               <option>Form 1D</option>
@@ -404,6 +403,12 @@ export default function DemoAdminDashboard() {
               <option>Form 4A</option>
             </select>
             <Input placeholder="Total Fees Required" type="number" />
+            <select className="w-full border border-gray-300 rounded px-3 py-2">
+              <option>Select Gender</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+            <Input placeholder="Scholarship Amount (Optional)" type="number" />
             <div className="flex gap-2 pt-4">
               <Button onClick={handleAddStudent} className="flex-1">
                 Add Student

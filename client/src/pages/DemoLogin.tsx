@@ -21,7 +21,7 @@ export default function DemoLogin() {
       
       // Redirect to dashboard
       if (role === "author") {
-        setLocation("/author-dashboard");
+        setLocation("/demo-author-dashboard");
       } else if (role === "schoolOwner") {
         setLocation("/admin-dashboard");
       } else if (role === "teacher") {
