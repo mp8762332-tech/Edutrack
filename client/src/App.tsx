@@ -10,6 +10,10 @@ import DemoAuthorDashboard from "./pages/DemoAuthorDashboard";
 import DemoAdminDashboard from "./pages/DemoAdminDashboard";
 import DemoTeacherDashboard from "./pages/DemoTeacherDashboard";
 import DemoStudentProfile from "./pages/DemoStudentProfile";
+import EdutrackLogin from "./pages/EdutrackLogin";
+import EdutrackPlatformOwner from "./pages/EdutrackPlatformOwner";
+import EdutrackSchoolAdmin from "./pages/EdutrackSchoolAdmin";
+import EdutrackTeacher from "./pages/EdutrackTeacher";
 
 function Router() {
   return (
@@ -20,6 +24,10 @@ function Router() {
       <Route path="/admin-dashboard" component={DemoAdminDashboard} />
       <Route path="/teacher-dashboard" component={DemoTeacherDashboard} />
       <Route path="/student-profile" component={DemoStudentProfile} />
+      <Route path="/edutrack-login" component={EdutrackLogin} />
+      <Route path="/edutrack-platform-owner" component={EdutrackPlatformOwner} />
+      <Route path="/edutrack-school-admin" component={EdutrackSchoolAdmin} />
+      <Route path="/edutrack-teacher" component={EdutrackTeacher} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
