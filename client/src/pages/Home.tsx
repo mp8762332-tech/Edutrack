@@ -82,14 +82,9 @@ export default function Home() {
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="text-2xl font-bold text-blue-600">SchoolMgmt</div>
-          <div className="flex gap-2">
-            <Button onClick={() => setLocation("/demo-login")} className="gap-2">
-              <Zap size={18} /> Original Demo
-            </Button>
-            <Button onClick={() => setLocation("/edutrack-login")} className="gap-2 bg-green-600 hover:bg-green-700">
-              🎓 EduTrack
-            </Button>
-          </div>
+          <Button onClick={() => setLocation("/demo-login")} className="gap-2">
+            <Zap size={18} /> Try Demo
+          </Button>
         </div>
       </nav>
 
@@ -109,14 +104,10 @@ export default function Home() {
               size="lg"
               className="gap-2 text-lg h-12 px-8"
             >
-              <Zap size={20} /> Original Demo
+              <Zap size={20} /> Launch Interactive Demo
             </Button>
-            <Button
-              onClick={() => setLocation("/edutrack-login")}
-              size="lg"
-              className="gap-2 text-lg h-12 px-8 bg-green-600 hover:bg-green-700"
-            >
-              🎓 EduTrack System
+            <Button size="lg" variant="outline" className="gap-2 text-lg h-12 px-8">
+              <ArrowRight size={20} /> Learn More
             </Button>
           </div>
         </div>
