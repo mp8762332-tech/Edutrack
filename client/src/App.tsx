@@ -10,6 +10,7 @@ import DemoAuthorDashboard from "./pages/DemoAuthorDashboard";
 import DemoAdminDashboard from "./pages/DemoAdminDashboard";
 import DemoTeacherDashboard from "./pages/DemoTeacherDashboard";
 import DemoStudentProfile from "./pages/DemoStudentProfile";
+import Reports from "./pages/Reports";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/admin-dashboard" component={DemoAdminDashboard} />
       <Route path="/teacher-dashboard" component={DemoTeacherDashboard} />
       <Route path="/student-profile" component={DemoStudentProfile} />
+      <Route path="/reports" component={Reports} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

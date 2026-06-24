@@ -11,6 +11,7 @@ import {
   Zap,
   Shield,
   Globe,
+  FileText,
 } from "lucide-react";
 
 export default function Home() {
@@ -82,9 +83,14 @@ export default function Home() {
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="text-2xl font-bold text-blue-600">SchoolMgmt</div>
-          <Button onClick={() => setLocation("/demo-login")} className="gap-2">
-            <Zap size={18} /> Try Demo
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setLocation("/demo-login")} className="gap-2">
+              <Zap size={18} /> Try Demo
+            </Button>
+            <Button onClick={() => setLocation("/reports")} variant="outline" className="gap-2">
+              <FileText size={18} /> Reports
+            </Button>
+          </div>
         </div>
       </nav>
 
