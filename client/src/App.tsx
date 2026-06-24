@@ -11,6 +11,7 @@ import DemoAdminDashboard from "./pages/DemoAdminDashboard";
 import DemoTeacherDashboard from "./pages/DemoTeacherDashboard";
 import DemoStudentProfile from "./pages/DemoStudentProfile";
 import Reports from "./pages/Reports";
+import ReportCard from "./pages/ReportCard";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/teacher-dashboard" component={DemoTeacherDashboard} />
       <Route path="/student-profile" component={DemoStudentProfile} />
       <Route path="/reports" component={Reports} />
+      <Route path="/report-card" component={ReportCard} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

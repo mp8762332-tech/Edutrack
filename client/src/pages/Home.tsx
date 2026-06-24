@@ -90,6 +90,9 @@ export default function Home() {
             <Button onClick={() => setLocation("/reports")} variant="outline" className="gap-2">
               <FileText size={18} /> Reports
             </Button>
+            <Button onClick={() => setLocation("/report-card")} variant="outline" className="gap-2">
+              <FileText size={18} /> Report Card
+            </Button>
           </div>
         </div>
       </nav>
