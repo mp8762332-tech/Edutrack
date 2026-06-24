@@ -139,11 +139,12 @@ export default function DemoAdminDashboard() {
 
         {/* Tabs */}
         <Tabs defaultValue="students" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="students">Students</TabsTrigger>
             <TabsTrigger value="teachers">Teachers</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="reportcards">Report Cards</TabsTrigger>
           </TabsList>
 
           {/* Students Tab */}
@@ -381,6 +382,90 @@ export default function DemoAdminDashboard() {
                 </div>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Report Cards Tab */}
+          <TabsContent value="reportcards">
+            <Card className="p-6">
+              <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+                  <Input
+                    placeholder="Search student by name or payment code..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button onClick={() => toast.success("Generating all report cards...")} className="gap-2">
+                  <Download size={18} /> Generate All
+                </Button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student Name</TableHead>
+                      <TableHead>Class</TableHead>
+                      <TableHead>Payment Code</TableHead>
+                      <TableHead>Average Mark</TableHead>
+                      <TableHead>Position</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredStudents.map((student, idx) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">
+                          {student.firstName} {student.lastName}
+                        </TableCell>
+                        <TableCell>{student.currentClass}</TableCell>
+                        <TableCell className="font-mono text-xs">{student.paymentCode}</TableCell>
+                        <TableCell>
+                          <Badge className="bg-blue-600">{75 + Math.random() * 15}</Badge>
+                        </TableCell>
+                        <TableCell>{idx + 1}/{filteredStudents.length}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1"
+                              onClick={() => toast.success(`Previewing ${student.firstName}'s report card`)}
+                            >
+                              <Eye size={14} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1"
+                              onClick={() => toast.success(`Printing ${student.firstName}'s report card`)}
+                            >
+                              📄
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1"
+                              onClick={() => toast.success(`Downloaded ${student.firstName}'s report card`)}
+                            >
+                              <Download size={14} />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-sm text-blue-900">
+                  <strong>📋 Report Cards:</strong> Generate professional term report cards for each student showing marks, grades, position, and teacher comments. Print or download for distribution.
+                </p>
+              </div>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
