@@ -20,6 +20,7 @@ import {
   Wifi,
   FileText,
   Eye,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,9 +119,10 @@ export default function EnterpriseTeacherDashboard() {
 
         {/* Tabs */}
         <Tabs defaultValue="marks" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="marks">Record Marks</TabsTrigger>
             <TabsTrigger value="aoi">AOI & Project Work</TabsTrigger>
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="students">My Students</TabsTrigger>
             <TabsTrigger value="syllabus">Syllabus</TabsTrigger>
           </TabsList>
@@ -298,6 +300,78 @@ export default function EnterpriseTeacherDashboard() {
                 <p className="text-sm text-blue-900">
                   <strong>📌 Note:</strong> AOI marks (1.0-3.0) and Project Work marks (1.0-3.0) together make up 20% of the final mark. Exam marks make up 80%.
                 </p>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Attendance Tab */}
+          <TabsContent value="attendance">
+            <Card className="p-6">
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="text-sm font-medium">Select Class</label>
+                  <select
+                    value={selectedClass}
+                    onChange={(e) => setSelectedClass(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 mt-2"
+                  >
+                    {teacherClasses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-medium">Select Week</label>
+                  <select className="w-full border border-gray-300 rounded px-3 py-2 mt-2">
+                    <option>Week 24</option>
+                    <option>Week 25</option>
+                    <option>Week 26</option>
+                  </select>
+                </div>
+              </div>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded mb-4">
+                <p className="text-sm text-blue-900">
+                  <strong>📋 Daily Attendance:</strong> Click the box to mark present (✓), leave blank for absent (X). Click Save when done.
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student Name</TableHead>
+                      <TableHead className="text-center">Mon</TableHead>
+                      <TableHead className="text-center">Tue</TableHead>
+                      <TableHead className="text-center">Wed</TableHead>
+                      <TableHead className="text-center">Thu</TableHead>
+                      <TableHead className="text-center">Fri</TableHead>
+                      <TableHead className="text-center">Sat</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredStudents.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.firstName} {student.lastName}</TableCell>
+                        {[1, 2, 3, 4, 5, 6].map((day) => (
+                          <TableCell key={day} className="text-center p-2">
+                            <button className="w-10 h-10 rounded border-2 border-gray-300 hover:border-green-500 transition flex items-center justify-center font-bold text-lg">
+                              {day === 1 ? "✓" : ""}
+                            </button>
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="mt-6 flex gap-2">
+                <Button onClick={() => toast.success("Attendance saved!")} className="gap-2 bg-green-600 hover:bg-green-700">
+                  <Calendar size={18} /> Save Attendance
+                </Button>
+                <Button onClick={() => toast.success("Report downloaded!")} variant="outline" className="gap-2">
+                  <Download size={18} /> Download Report
+                </Button>
               </div>
             </Card>
           </TabsContent>

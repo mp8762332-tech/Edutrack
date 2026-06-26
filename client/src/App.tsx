@@ -16,6 +16,9 @@ import EnterpriseLogin from "./pages/EnterpriseLogin";
 import EnterprisePlatformOwner from "./pages/EnterprisePlatformOwner";
 import EnterpriseAdminDashboard from "./pages/EnterpriseAdminDashboard";
 import EnterpriseTeacherDashboard from "./pages/EnterpriseTeacherDashboard";
+import TeacherRegistration from "./pages/TeacherRegistration";
+import MultiSchoolTeacherLogin from "./pages/MultiSchoolTeacherLogin";
+import AttendanceTracking from "./pages/AttendanceTracking";
 
 function Router() {
   return (
@@ -32,6 +35,9 @@ function Router() {
       <Route path="/enterprise-platform-owner" component={EnterprisePlatformOwner} />
       <Route path="/enterprise-admin" component={EnterpriseAdminDashboard} />
       <Route path="/enterprise-teacher" component={EnterpriseTeacherDashboard} />
+      <Route path="/teacher-registration" component={TeacherRegistration} />
+      <Route path="/multi-school-teacher-login" component={MultiSchoolTeacherLogin} />
+      <Route path="/attendance" component={AttendanceTracking} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
