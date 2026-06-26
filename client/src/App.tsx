@@ -12,6 +12,10 @@ import DemoTeacherDashboard from "./pages/DemoTeacherDashboard";
 import DemoStudentProfile from "./pages/DemoStudentProfile";
 import Reports from "./pages/Reports";
 import ReportCard from "./pages/ReportCard";
+import EnterpriseLogin from "./pages/EnterpriseLogin";
+import EnterprisePlatformOwner from "./pages/EnterprisePlatformOwner";
+import EnterpriseAdminDashboard from "./pages/EnterpriseAdminDashboard";
+import EnterpriseTeacherDashboard from "./pages/EnterpriseTeacherDashboard";
 
 function Router() {
   return (
@@ -24,6 +28,10 @@ function Router() {
       <Route path="/student-profile" component={DemoStudentProfile} />
       <Route path="/reports" component={Reports} />
       <Route path="/report-card" component={ReportCard} />
+      <Route path="/enterprise-login" component={EnterpriseLogin} />
+      <Route path="/enterprise-platform-owner" component={EnterprisePlatformOwner} />
+      <Route path="/enterprise-admin" component={EnterpriseAdminDashboard} />
+      <Route path="/enterprise-teacher" component={EnterpriseTeacherDashboard} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
