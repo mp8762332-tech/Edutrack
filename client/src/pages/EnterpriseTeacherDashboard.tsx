@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,13 +16,156 @@ import {
   Download,
   Search,
   LogOut,
-  Lock,
   Wifi,
   FileText,
   Eye,
   Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
+
+function AttendanceTab({ teacherClasses, filteredStudents, selectedClass, setSelectedClass }: {
+  teacherClasses: any[];
+  filteredStudents: any[];
+  selectedClass: string;
+  setSelectedClass: (v: string) => void;
+}) {
+  const [attendance, setAttendance] = useState<Record<string, boolean[]>>({});
+  const [saved, setSaved] = useState(false);
+
+  // Initialize attendance state for all students
+  useEffect(() => {
+    const initial: Record<string, boolean[]> = {};
+    filteredStudents.forEach((s) => {
+      if (!attendance[s.id]) {
+        initial[s.id] = [false, false, false, false, false, false];
+      }
+    });
+    if (Object.keys(initial).length > 0) {
+      setAttendance((prev) => ({ ...prev, ...initial }));
+    }
+  }, [filteredStudents]);
+
+  const toggleAttendance = (studentId: string, dayIndex: number) => {
+    if (saved) return; // Can't edit after saving
+    setAttendance((prev) => {
+      const current = prev[studentId] || [false, false, false, false, false, false];
+      const updated = [...current];
+      updated[dayIndex] = !updated[dayIndex];
+      return { ...prev, [studentId]: updated };
+    });
+  };
+
+  const handleSave = () => {
+    setSaved(true);
+    toast.success("Attendance saved! Absent students marked with X.");
+  };
+
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  return (
+    <Card className="p-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+          <label className="text-sm font-medium">Select Class</label>
+          <select
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 mt-2"
+          >
+            {teacherClasses.map((c: any) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1">
+          <label className="text-sm font-medium">Select Week</label>
+          <select className="w-full border border-gray-300 rounded px-3 py-2 mt-2">
+            <option>Week 24 (Jun 9 - Jun 14)</option>
+            <option>Week 25 (Jun 16 - Jun 21)</option>
+            <option>Week 26 (Jun 23 - Jun 28)</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded mb-4">
+        <p className="text-sm text-blue-900">
+          <strong>Roll Call Instructions:</strong> Click the box next to each student's name for each day they are present. A bold <span className="text-green-700 font-bold">\u2713</span> appears. Leave blank for absent. After saving, all blank boxes automatically get a red <span className="text-red-600 font-bold">\u2717</span>.
+        </p>
+      </div>
+
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[180px]">Student Name</TableHead>
+              {days.map((day) => (
+                <TableHead key={day} className="text-center w-16">{day}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredStudents.map((student: any) => {
+              const studentAttendance = attendance[student.id] || [false, false, false, false, false, false];
+              return (
+                <TableRow key={student.id}>
+                  <TableCell className="font-medium">{student.firstName} {student.lastName}</TableCell>
+                  {studentAttendance.map((present: boolean, dayIdx: number) => (
+                    <TableCell key={dayIdx} className="text-center p-1">
+                      <button
+                        onClick={() => toggleAttendance(student.id, dayIdx)}
+                        className={`w-10 h-10 rounded border-2 transition flex items-center justify-center font-bold text-lg ${
+                          present
+                            ? "border-green-500 bg-green-50"
+                            : saved
+                            ? "border-red-400 bg-red-50"
+                            : "border-gray-300 hover:border-green-400 bg-white"
+                        }`}
+                        disabled={saved}
+                      >
+                        {present ? (
+                          <span className="text-green-600 font-bold">\u2713</span>
+                        ) : saved ? (
+                          <span className="text-red-600 font-bold">\u2717</span>
+                        ) : (
+                          ""
+                        )}
+                      </button>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="mt-6 flex gap-3">
+        {!saved ? (
+          <Button onClick={handleSave} className="gap-2 bg-green-600 hover:bg-green-700">
+            <Calendar size={18} /> Save Attendance
+          </Button>
+        ) : (
+          <Button onClick={() => setSaved(false)} variant="outline" className="gap-2">
+            Edit Attendance
+          </Button>
+        )}
+        <Button onClick={() => toast.success("Attendance report downloaded as CSV")} variant="outline" className="gap-2">
+          <Download size={18} /> Download Report
+        </Button>
+      </div>
+
+      {saved && (
+        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+          <p className="text-sm text-green-900">
+            <strong>\u2705 Attendance saved successfully!</strong> All absent students have been marked with a red X. Admin and class teacher can access this record.
+          </p>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 export default function EnterpriseTeacherDashboard() {
   const [, setLocation] = useLocation();
@@ -67,17 +210,21 @@ export default function EnterpriseTeacherDashboard() {
               <h1 className="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
               <p className="text-sm text-gray-600">Peter Kipchoge • Mathematics & Physics</p>
             </div>
+            <Badge className="bg-green-100 text-green-800 border border-green-300 gap-1">
+              <Wifi size={14} />
+              Online
+            </Badge>
             <Button onClick={handleLogout} variant="outline" size="sm" className="gap-2">
               <LogOut size={18} />
               Logout
             </Button>
           </div>
 
-          {/* LAN Security Status */}
+          {/* Cloud Access Status */}
           <div className="p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2">
             <Wifi className="text-green-600" size={18} />
             <span className="text-sm text-green-900">
-              <strong>✓ LAN Connected:</strong> 192.168.1.45 • NIS-STAFF-NETWORK • Secure
+              <strong>☁️ Online:</strong> Access from any device, anywhere • Data auto-synced to cloud • Low data usage (~50MB)
             </span>
           </div>
         </div>
@@ -306,74 +453,7 @@ export default function EnterpriseTeacherDashboard() {
 
           {/* Attendance Tab */}
           <TabsContent value="attendance">
-            <Card className="p-6">
-              <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="flex-1">
-                  <label className="text-sm font-medium">Select Class</label>
-                  <select
-                    value={selectedClass}
-                    onChange={(e) => setSelectedClass(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2 mt-2"
-                  >
-                    {teacherClasses.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex-1">
-                  <label className="text-sm font-medium">Select Week</label>
-                  <select className="w-full border border-gray-300 rounded px-3 py-2 mt-2">
-                    <option>Week 24</option>
-                    <option>Week 25</option>
-                    <option>Week 26</option>
-                  </select>
-                </div>
-              </div>
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded mb-4">
-                <p className="text-sm text-blue-900">
-                  <strong>📋 Daily Attendance:</strong> Click the box to mark present (✓), leave blank for absent (X). Click Save when done.
-                </p>
-              </div>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Student Name</TableHead>
-                      <TableHead className="text-center">Mon</TableHead>
-                      <TableHead className="text-center">Tue</TableHead>
-                      <TableHead className="text-center">Wed</TableHead>
-                      <TableHead className="text-center">Thu</TableHead>
-                      <TableHead className="text-center">Fri</TableHead>
-                      <TableHead className="text-center">Sat</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredStudents.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.firstName} {student.lastName}</TableCell>
-                        {[1, 2, 3, 4, 5, 6].map((day) => (
-                          <TableCell key={day} className="text-center p-2">
-                            <button className="w-10 h-10 rounded border-2 border-gray-300 hover:border-green-500 transition flex items-center justify-center font-bold text-lg">
-                              {day === 1 ? "✓" : ""}
-                            </button>
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              <div className="mt-6 flex gap-2">
-                <Button onClick={() => toast.success("Attendance saved!")} className="gap-2 bg-green-600 hover:bg-green-700">
-                  <Calendar size={18} /> Save Attendance
-                </Button>
-                <Button onClick={() => toast.success("Report downloaded!")} variant="outline" className="gap-2">
-                  <Download size={18} /> Download Report
-                </Button>
-              </div>
-            </Card>
+            <AttendanceTab teacherClasses={teacherClasses} filteredStudents={filteredStudents} selectedClass={selectedClass} setSelectedClass={setSelectedClass} />
           </TabsContent>
 
           {/* My Students Tab */}

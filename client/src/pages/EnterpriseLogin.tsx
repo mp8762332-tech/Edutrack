@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Wifi, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Lock, Globe, CheckCircle2, BookOpen, Cloud } from "lucide-react";
 import { toast } from "sonner";
 
 export default function EnterpriseLogin() {
@@ -12,7 +12,6 @@ export default function EnterpriseLogin() {
   const [role, setRole] = useState<"platform" | "admin" | "teacher" | "">("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [lanConnected, setLanConnected] = useState(true);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +26,6 @@ export default function EnterpriseLogin() {
       return;
     }
 
-    if (!lanConnected && role !== "platform") {
-      toast.error("LAN connection required for school staff");
-      return;
-    }
-
     // Store demo user
     localStorage.setItem("demoUser", JSON.stringify({ role, username }));
 
@@ -41,8 +35,11 @@ export default function EnterpriseLogin() {
     } else if (role === "admin") {
       setLocation("/enterprise-admin");
     } else if (role === "teacher") {
-      setLocation("/enterprise-teacher");
+      // Check if teacher has multiple schools
+      setLocation("/multi-school-teacher-login");
     }
+
+    toast.success("Login successful!");
   };
 
   return (
@@ -57,26 +54,20 @@ export default function EnterpriseLogin() {
           <p className="text-purple-100">Enterprise School Management System</p>
         </div>
 
-        {/* LAN Security Status */}
+        {/* Cloud Access Status */}
         <Card className="p-4 mb-6 border-0">
-          <div className="flex items-center gap-3 mb-3">
-            <Wifi className={lanConnected ? "text-green-600" : "text-red-600"} size={20} />
+          <div className="flex items-center gap-3">
+            <Cloud className="text-green-600" size={20} />
             <div className="flex-1">
-              <p className="font-medium text-sm">Network Status</p>
+              <p className="font-medium text-sm">Cloud Access</p>
               <p className="text-xs text-gray-600">
-                {lanConnected ? "Connected to NIS-STAFF-NETWORK" : "No LAN connection detected"}
+                Access from any device, anywhere, anytime
               </p>
             </div>
-            <Badge className={lanConnected ? "bg-green-600" : "bg-red-600"}>
-              {lanConnected ? "✓ Secure" : "✗ Offline"}
+            <Badge className="bg-green-600">
+              <Globe size={12} className="mr-1" /> Online
             </Badge>
           </div>
-          {!lanConnected && (
-            <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-900 flex gap-2">
-              <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-              <span>LAN connection required for school staff access</span>
-            </div>
-          )}
         </Card>
 
         {/* Login Form */}
@@ -85,7 +76,7 @@ export default function EnterpriseLogin() {
             {/* Role Selection */}
             <div>
               <label className="text-sm font-medium block mb-3">Select Your Role</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <button
                   type="button"
                   onClick={() => setRole("platform")}
@@ -96,7 +87,7 @@ export default function EnterpriseLogin() {
                   }`}
                 >
                   <p className="font-medium text-sm">Platform Owner</p>
-                  <p className="text-xs text-gray-600">Global Admin</p>
+                  <p className="text-xs text-gray-600">Super Admin</p>
                 </button>
                 <button
                   type="button"
@@ -108,7 +99,7 @@ export default function EnterpriseLogin() {
                   }`}
                 >
                   <p className="font-medium text-sm">School Admin</p>
-                  <p className="text-xs text-gray-600">LAN Required</p>
+                  <p className="text-xs text-gray-600">School Name</p>
                 </button>
                 <button
                   type="button"
@@ -120,29 +111,33 @@ export default function EnterpriseLogin() {
                   }`}
                 >
                   <p className="font-medium text-sm">Teacher</p>
-                  <p className="text-xs text-gray-600">LAN Required</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole("")}
-                  className={`p-3 rounded border-2 transition ${
-                    role === ""
-                      ? "border-purple-600 bg-purple-50"
-                      : "border-gray-200 hover:border-purple-300"
-                  }`}
-                >
-                  <p className="font-medium text-sm">Student</p>
-                  <p className="text-xs text-gray-600">Coming Soon</p>
+                  <p className="text-xs text-gray-600">Any Device</p>
                 </button>
               </div>
             </div>
 
+            {/* Admin: School Name as Username */}
+            {role === "admin" && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-900">
+                <p className="font-medium mb-1">Login with School Name:</p>
+                <p>Your school name is your username. All data is stored on cloud.</p>
+              </div>
+            )}
+
+            {/* Teacher: Multi-school notice */}
+            {role === "teacher" && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded text-xs text-green-900">
+                <p className="font-medium mb-1">Multi-School Access:</p>
+                <p>If you teach at multiple schools, you'll see all your schools after login.</p>
+              </div>
+            )}
+
             {/* Demo Credentials */}
             {role && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-900">
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-900">
                 <p className="font-medium mb-1">Demo Credentials:</p>
                 <p>
-                  Username: <code className="bg-white px-1 rounded">{role === "platform" ? "mark" : role === "admin" ? "admin" : "peter"}</code>
+                  Username: <code className="bg-white px-1 rounded">{role === "platform" ? "mark" : role === "admin" ? "Gideon High School" : "peter"}</code>
                 </p>
                 <p>
                   Password: <code className="bg-white px-1 rounded">demo123</code>
@@ -152,10 +147,12 @@ export default function EnterpriseLogin() {
 
             {/* Username */}
             <div>
-              <label className="text-sm font-medium block mb-2">Username</label>
+              <label className="text-sm font-medium block mb-2">
+                {role === "admin" ? "School Name" : "Username"}
+              </label>
               <Input
                 type="text"
-                placeholder={role === "platform" ? "mark" : role === "admin" ? "admin" : "peter"}
+                placeholder={role === "platform" ? "mark" : role === "admin" ? "Gideon High School" : "peter.kipchoge"}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={!role}
@@ -174,18 +171,10 @@ export default function EnterpriseLogin() {
               />
             </div>
 
-            {/* LAN Warning */}
-            {role && role !== "platform" && !lanConnected && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-900 flex gap-2">
-                <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-                <span>School staff must be connected to the school network (NIS-STAFF-NETWORK) to access the system</span>
-              </div>
-            )}
-
             {/* Login Button */}
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+              className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 h-12"
               disabled={!role}
             >
               <Lock size={18} className="mr-2" />
@@ -203,30 +192,35 @@ export default function EnterpriseLogin() {
         {/* Features */}
         <div className="mt-8 grid grid-cols-2 gap-4 text-white">
           <div className="text-center">
-            <div className="text-2xl mb-1">🔒</div>
-            <p className="text-xs">LAN Security</p>
-            <p className="text-xs text-purple-200">IP-based access control</p>
+            <div className="text-2xl mb-1">☁️</div>
+            <p className="text-xs">Cloud Storage</p>
+            <p className="text-xs text-purple-200">Data safe on any device</p>
           </div>
           <div className="text-center">
             <div className="text-2xl mb-1">📊</div>
-            <p className="text-xs">Intelligent Grading</p>
-            <p className="text-xs text-purple-200">Auto-calculation & results</p>
+            <p className="text-xs">Auto Grading</p>
+            <p className="text-xs text-purple-200">Intelligent calculations</p>
           </div>
           <div className="text-center">
             <div className="text-2xl mb-1">⚡</div>
-            <p className="text-xs">Fast Reports</p>
-            <p className="text-xs text-purple-200">10,000 in 3-5 seconds</p>
+            <p className="text-xs">Ultra Fast</p>
+            <p className="text-xs text-purple-200">10,000 reports in seconds</p>
           </div>
           <div className="text-center">
-            <div className="text-2xl mb-1">🎓</div>
-            <p className="text-xs">Multi-Level</p>
-            <p className="text-xs text-purple-200">Primary, O & A Level</p>
+            <div className="text-2xl mb-1">📱</div>
+            <p className="text-xs">Any Device</p>
+            <p className="text-xs text-purple-200">Desktop & Mobile</p>
           </div>
+        </div>
+
+        {/* Access Info */}
+        <div className="mt-6 p-4 bg-white/10 rounded-lg">
+          <p className="text-xs text-purple-100 text-center">
+            Access from anywhere - Desktop, Mobile, Tablet. Data stored securely on cloud.
+            Even if school computers are stolen, your data is safe.
+          </p>
         </div>
       </div>
     </div>
   );
 }
-
-// Import missing icon
-import { BookOpen } from "lucide-react";

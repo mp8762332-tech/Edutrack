@@ -19,7 +19,6 @@ export interface School {
   principalName: string;
   principalPhone: string;
   principalEmail: string;
-  bursarName: string;
   adminName: string;
   motto: string;
   vision: string;
@@ -30,8 +29,6 @@ export interface School {
   currentStudents: number;
   status: "Active" | "Suspended" | "Trial";
   dateRegistered: string;
-  ipAddress?: string;
-  networkName?: string;
   logoUrl?: string;
 }
 
@@ -145,7 +142,6 @@ export const demoSchools: School[] = [
     principalName: "Dr. James Kipchoge",
     principalPhone: "+256701234567",
     principalEmail: "principal@nairobi-intl.edu",
-    bursarName: "Grace Mwangi",
     adminName: "Peter Kipchoge",
     motto: "Learn and Shine",
     vision: "Excellence in Education for Global Leadership",
@@ -156,8 +152,6 @@ export const demoSchools: School[] = [
     currentStudents: 450,
     status: "Active",
     dateRegistered: "2024-01-01",
-    ipAddress: "192.168.1.0/24",
-    networkName: "NIS-STAFF-NETWORK",
     logoUrl: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%234F46E5'/%3E%3Ctext x='50' y='60' font-size='50' font-weight='bold' fill='white' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E",
   },
 ];
@@ -400,8 +394,8 @@ export interface PlatformStats {
   suspendedSchools: number;
   totalStudents: number;
   totalTeachers: number;
-  totalRevenue: number;
-  monthlyRevenue: number;
+  totalRevenue: number; // Platform subscription revenue (Author's income)
+  monthlyRevenue: number; // Monthly subscription income for Author
   expiringSubscriptions: number;
   supportTickets: number;
 }

@@ -19,6 +19,8 @@ import EnterpriseTeacherDashboard from "./pages/EnterpriseTeacherDashboard";
 import TeacherRegistration from "./pages/TeacherRegistration";
 import MultiSchoolTeacherLogin from "./pages/MultiSchoolTeacherLogin";
 import AttendanceTracking from "./pages/AttendanceTracking";
+import SchoolOnboarding from "./pages/SchoolOnboarding";
+import BulkCSVImport from "./pages/BulkCSVImport";
 
 function Router() {
   return (
@@ -38,6 +40,9 @@ function Router() {
       <Route path="/teacher-registration" component={TeacherRegistration} />
       <Route path="/multi-school-teacher-login" component={MultiSchoolTeacherLogin} />
       <Route path="/attendance" component={AttendanceTracking} />
+      <Route path="/school-onboarding/:code" component={SchoolOnboarding} />
+      <Route path="/school-onboarding" component={SchoolOnboarding} />
+      <Route path="/bulk-csv-import" component={BulkCSVImport} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

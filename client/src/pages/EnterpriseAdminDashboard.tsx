@@ -20,7 +20,6 @@ import {
 import {
   Users,
   BookOpen,
-  DollarSign,
   TrendingUp,
   Plus,
   Trash2,
@@ -32,6 +31,7 @@ import {
   FileText,
   Award,
   Zap,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -156,13 +156,16 @@ export default function EnterpriseAdminDashboard() {
 
         {/* Tabs */}
         <Tabs defaultValue="students" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-8">
             <TabsTrigger value="students">Students</TabsTrigger>
+            <TabsTrigger value="teachers">Teachers</TabsTrigger>
             <TabsTrigger value="aoi">AOI Marks</TabsTrigger>
             <TabsTrigger value="results">Results</TabsTrigger>
             <TabsTrigger value="grading">Grading</TabsTrigger>
             <TabsTrigger value="reports">Report Cards</TabsTrigger>
+            <TabsTrigger value="csv-import">CSV Import</TabsTrigger>
             <TabsTrigger value="syllabus">Syllabus</TabsTrigger>
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
           </TabsList>
 
           {/* Students Tab */}
@@ -452,6 +455,129 @@ export default function EnterpriseAdminDashboard() {
             </Card>
           </TabsContent>
 
+          {/* Teachers Tab */}
+          <TabsContent value="teachers">
+            <Card className="p-6">
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+                  <Input placeholder="Search teachers..." className="pl-10" />
+                </div>
+                <Button onClick={() => setLocation('/teacher-registration')} className="gap-2">
+                  <Plus size={18} /> Add Teacher (Send Invite)
+                </Button>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Classes</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[
+                    { name: "Peter Kipchoge", subject: "Mathematics", classes: "S1A, S2B, S3A", position: "HOD Sciences", phone: "0701234567", status: "Active" },
+                    { name: "Jane Namuli", subject: "English", classes: "S1A, S1B, S2A", position: "Class Teacher S1A", phone: "0712345678", status: "Active" },
+                    { name: "Moses Okot", subject: "Physics", classes: "S3A, S3B, S4A", position: "DOS", phone: "0723456789", status: "Active" },
+                    { name: "Sarah Auma", subject: "Biology", classes: "S2A, S2B, S4A", position: "Regular Teacher", phone: "0734567890", status: "Active" },
+                    { name: "John Wafula", subject: "Chemistry", classes: "S3A, S4A, S4B", position: "Class Teacher S4A", phone: "0745678901", status: "Active" },
+                    { name: "Agnes Nabirye", subject: "History", classes: "S1A, S2A, S3A", position: "Regular Teacher", phone: "0756789012", status: "Invited" },
+                  ].map((teacher, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">{teacher.name}</TableCell>
+                      <TableCell>{teacher.subject}</TableCell>
+                      <TableCell className="text-xs">{teacher.classes}</TableCell>
+                      <TableCell>{teacher.position}</TableCell>
+                      <TableCell className="text-xs">{teacher.phone}</TableCell>
+                      <TableCell>
+                        <Badge className={teacher.status === "Active" ? "bg-green-600" : "bg-yellow-500"}>
+                          {teacher.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => toast.success(`Viewing ${teacher.name}'s profile`)}>
+                            <Eye size={14} />
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => toast.success(`Downloading ${teacher.name}'s marks as CSV`)}>
+                            <Download size={14} />
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-red-600" onClick={() => toast.success(`${teacher.name} permanently deleted. Account access revoked.`)}>
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                <p className="text-xs text-red-900">
+                  <strong>Note:</strong> Deleting a teacher permanently removes their access. They cannot log in again even with the same credentials.
+                </p>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* CSV Import Tab */}
+          <TabsContent value="csv-import">
+            <Card className="p-6">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <FileText size={20} />
+                Bulk CSV Import
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Upload CSV files from Excel to create student or teacher accounts in bulk. The system processes up to 10,000 accounts in under 5 minutes.
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className="p-6 border-2 border-dashed border-blue-300 rounded-lg text-center cursor-pointer hover:bg-blue-50 transition" onClick={() => setLocation('/bulk-csv-import')}>
+                  <Users className="mx-auto text-blue-600 mb-3" size={40} />
+                  <p className="font-bold text-gray-900">Import Students</p>
+                  <p className="text-sm text-gray-600 mt-1">Upload CSV with student data</p>
+                  <p className="text-xs text-blue-600 mt-2">Supports up to 10,000 students</p>
+                </div>
+                <div className="p-6 border-2 border-dashed border-green-300 rounded-lg text-center cursor-pointer hover:bg-green-50 transition" onClick={() => setLocation('/bulk-csv-import')}>
+                  <Users className="mx-auto text-green-600 mb-3" size={40} />
+                  <p className="font-bold text-gray-900">Import Teachers</p>
+                  <p className="text-sm text-gray-600 mt-1">Upload CSV with teacher data</p>
+                  <p className="text-xs text-green-600 mt-2">Auto-sends invite links</p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-green-50 border border-green-200 rounded">
+                  <p className="text-sm font-medium text-green-900">Last Import</p>
+                  <p className="text-xl font-bold text-green-600 mt-1">8,000 students</p>
+                  <p className="text-xs text-green-700 mt-1">Completed in 2m 45s</p>
+                </div>
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-sm font-medium text-blue-900">Success Rate</p>
+                  <p className="text-xl font-bold text-blue-600 mt-1">99.8%</p>
+                  <p className="text-xs text-blue-700 mt-1">16 errors (duplicates)</p>
+                </div>
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded">
+                  <p className="text-sm font-medium text-purple-900">Processing Speed</p>
+                  <p className="text-xl font-bold text-purple-600 mt-1">~50/sec</p>
+                  <p className="text-xs text-purple-700 mt-1">Accounts per second</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-sm text-yellow-900">
+                  <strong>Tip:</strong> Schools already using Excel spreadsheets can simply export to CSV and upload here. The system reads each line and creates individual accounts automatically.
+                </p>
+              </div>
+            </Card>
+          </TabsContent>
+
           {/* Syllabus Tab */}
           <TabsContent value="syllabus">
             <Card className="p-6">
@@ -470,6 +596,93 @@ export default function EnterpriseAdminDashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Attendance Tab */}
+          <TabsContent value="attendance">
+            <Card className="p-6">
+              <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold">Daily Attendance Records</h3>
+                  <p className="text-sm text-gray-600">View attendance for all classes. Class teachers mark attendance daily.</p>
+                </div>
+                <Button onClick={() => setLocation('/attendance')} className="gap-2">
+                  <Eye size={18} /> Full Attendance View
+                </Button>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-green-50 border border-green-200 rounded">
+                  <p className="text-sm font-medium text-green-900">Present Today</p>
+                  <p className="text-2xl font-bold text-green-600 mt-1">423</p>
+                  <p className="text-xs text-green-700 mt-1">94% attendance rate</p>
+                </div>
+                <div className="p-4 bg-red-50 border border-red-200 rounded">
+                  <p className="text-sm font-medium text-red-900">Absent Today</p>
+                  <p className="text-2xl font-bold text-red-600 mt-1">27</p>
+                  <p className="text-xs text-red-700 mt-1">6% absence rate</p>
+                </div>
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-sm font-medium text-blue-900">Term Average</p>
+                  <p className="text-2xl font-bold text-blue-600 mt-1">91%</p>
+                  <p className="text-xs text-blue-700 mt-1">Attendance rate</p>
+                </div>
+              </div>
+
+              {/* Weekly Attendance Table */}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student Name</TableHead>
+                      <TableHead>Class</TableHead>
+                      <TableHead className="text-center">Mon</TableHead>
+                      <TableHead className="text-center">Tue</TableHead>
+                      <TableHead className="text-center">Wed</TableHead>
+                      <TableHead className="text-center">Thu</TableHead>
+                      <TableHead className="text-center">Fri</TableHead>
+                      <TableHead className="text-center">Sat</TableHead>
+                      <TableHead className="text-center">%</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {demoStudents.slice(0, 8).map((student) => {
+                      const days = [true, true, true, Math.random() > 0.2, Math.random() > 0.15, Math.random() > 0.3];
+                      const present = days.filter(Boolean).length;
+                      return (
+                        <TableRow key={student.id}>
+                          <TableCell className="font-medium">{student.firstName} {student.lastName}</TableCell>
+                          <TableCell>{student.level}</TableCell>
+                          {days.map((d, i) => (
+                            <TableCell key={i} className="text-center">
+                              {d ? (
+                                <span className="text-green-600 font-bold text-lg">✓</span>
+                              ) : (
+                                <span className="text-red-600 font-bold text-lg">✗</span>
+                              )}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-center font-bold">
+                            <Badge className={present >= 5 ? "bg-green-600" : present >= 4 ? "bg-yellow-600" : "bg-red-600"}>
+                              {Math.round((present / 6) * 100)}%
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="mt-4 flex gap-4">
+                <Button onClick={() => toast.success("Attendance report downloaded as CSV")} variant="outline" className="gap-2">
+                  <Download size={16} /> Export Attendance CSV
+                </Button>
+                <Button onClick={() => toast.success("Absence alerts sent to parents")} variant="outline" className="gap-2 text-red-600">
+                  📱 Send Absence Alerts
+                </Button>
               </div>
             </Card>
           </TabsContent>

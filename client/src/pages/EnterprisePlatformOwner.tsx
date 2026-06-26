@@ -22,6 +22,10 @@ import {
   MessageSquare,
   DollarSign,
   Calendar,
+  Send,
+  Copy,
+  CheckCircle2,
+  Link,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +33,13 @@ export default function EnterprisePlatformOwner() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddSchool, setShowAddSchool] = useState(false);
+  const [showCodeGenerated, setShowCodeGenerated] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [schoolEmail, setSchoolEmail] = useState("");
+  const [schoolName, setSchoolName] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
 
   const filteredSchools = demoSchools.filter(
     (s) =>
@@ -42,9 +53,58 @@ export default function EnterprisePlatformOwner() {
     setLocation("/enterprise-login");
   };
 
-  const handleAddSchool = () => {
-    toast.success("New school registered successfully!");
+  // Generate unique 6-digit school code
+  const generateSchoolCode = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
+  const handleGenerateCode = () => {
+    if (!schoolName || !schoolEmail) {
+      toast.error("Please fill in school name and email first");
+      return;
+    }
+    const code = generateSchoolCode();
+    const link = `${window.location.origin}/school-onboarding/${code}`;
+    setGeneratedCode(code);
+    setGeneratedLink(link);
+    setShowCodeGenerated(true);
+    toast.success(`School code generated: ${code}`);
+  };
+
+  const handleSendToSchool = () => {
+    setIsSending(true);
+    // Simulate sending email
+    setTimeout(() => {
+      setIsSending(false);
+      setCodeSent(true);
+      toast.success(`Registration link sent to ${schoolEmail}!`);
+    }, 2000);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    toast.success("Link copied to clipboard!");
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(generatedCode);
+    toast.success("Code copied to clipboard!");
+  };
+
+  const handleCloseRegistration = () => {
     setShowAddSchool(false);
+    setShowCodeGenerated(false);
+    setGeneratedCode("");
+    setGeneratedLink("");
+    setSchoolEmail("");
+    setSchoolName("");
+    setIsSending(false);
+    setCodeSent(false);
   };
 
   return (
@@ -53,7 +113,7 @@ export default function EnterprisePlatformOwner() {
       <header className="bg-gradient-to-r from-purple-600 to-purple-700 text-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Platform Owner Dashboard</h1>
+            <h1 className="text-2xl font-bold">EduTrack Platform Owner</h1>
             <p className="text-sm text-purple-100">Global School Management System</p>
           </div>
           <div className="flex items-center gap-4">
@@ -108,9 +168,9 @@ export default function EnterprisePlatformOwner() {
           <Card className="p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Monthly Revenue</p>
+                <p className="text-gray-600 text-sm font-medium">My Subscription Revenue</p>
                 <p className="text-3xl font-bold text-gray-900 mt-2">UGX {(demoPlatformStats.monthlyRevenue / 1000000).toFixed(1)}M</p>
-                <p className="text-xs text-green-600 mt-1">+8% from last month</p>
+                <p className="text-xs text-green-600 mt-1">+8% from last month (Author only)</p>
               </div>
               <DollarSign className="text-yellow-600" size={32} />
             </div>
@@ -139,8 +199,8 @@ export default function EnterprisePlatformOwner() {
                     className="pl-10"
                   />
                 </div>
-                <Button onClick={() => setShowAddSchool(true)} className="gap-2">
-                  <Plus size={18} /> Register School
+                <Button onClick={() => setShowAddSchool(true)} className="gap-2 bg-purple-600 hover:bg-purple-700">
+                  <Plus size={18} /> Register New School
                 </Button>
               </div>
 
@@ -162,7 +222,7 @@ export default function EnterprisePlatformOwner() {
                     {filteredSchools.map((school) => (
                       <TableRow key={school.id}>
                         <TableCell className="font-medium">{school.name}</TableCell>
-                        <TableCell className="font-mono text-xs">{school.code}</TableCell>
+                        <TableCell className="font-mono text-xs bg-gray-100 rounded px-2">{school.code}</TableCell>
                         <TableCell>{school.level}</TableCell>
                         <TableCell>{school.city}, {school.district}</TableCell>
                         <TableCell>{school.currentStudents}/{school.maxStudents}</TableCell>
@@ -225,7 +285,7 @@ export default function EnterprisePlatformOwner() {
               </Card>
 
               <Card className="p-6">
-                <h3 className="text-lg font-bold mb-4">Revenue Overview</h3>
+                <h3 className="text-lg font-bold mb-4">My Platform Revenue (Author Only)</h3>
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between mb-2">
@@ -299,14 +359,12 @@ export default function EnterprisePlatformOwner() {
                 Support Tickets
               </h3>
               <div className="space-y-3">
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-yellow-900">Open Tickets</p>
-                      <p className="text-sm text-yellow-700">{demoPlatformStats.supportTickets} tickets awaiting response</p>
-                    </div>
-                    <span className="text-3xl font-bold text-yellow-600">{demoPlatformStats.supportTickets}</span>
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-yellow-900">Open Tickets</p>
+                    <p className="text-sm text-yellow-700">{demoPlatformStats.supportTickets} tickets awaiting response</p>
                   </div>
+                  <span className="text-3xl font-bold text-yellow-600">{demoPlatformStats.supportTickets}</span>
                 </div>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="p-4 bg-red-50 border border-red-200 rounded">
@@ -353,58 +411,206 @@ export default function EnterprisePlatformOwner() {
         </Tabs>
       </main>
 
-      {/* Add School Modal */}
-      <Dialog open={showAddSchool} onOpenChange={setShowAddSchool}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+      {/* Register School Modal - Step 1: Fill Details */}
+      <Dialog open={showAddSchool && !showCodeGenerated} onOpenChange={handleCloseRegistration}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-lg">
           <DialogHeader>
-            <DialogTitle>Register New School</DialogTitle>
+            <DialogTitle className="text-xl">Register New School</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Input placeholder="School Name" />
-              <Input placeholder="School Code (auto-generated)" disabled />
+            <div className="p-3 bg-purple-50 border border-purple-200 rounded">
+              <p className="text-sm text-purple-900">
+                Fill in the school details below. A unique <strong>6-digit code</strong> and registration link will be generated and sent to the school's email.
+              </p>
             </div>
-            <select className="w-full border border-gray-300 rounded px-3 py-2">
-              <option>Select School Type</option>
-              <option>Nursery</option>
-              <option>Primary</option>
-              <option>Secondary</option>
-            </select>
-            <select className="w-full border border-gray-300 rounded px-3 py-2">
-              <option>Select Education Level</option>
-              <option>Primary</option>
-              <option>O-Level</option>
-              <option>A-Level</option>
-              <option>Mixed</option>
-            </select>
-            <select className="w-full border border-gray-300 rounded px-3 py-2">
-              <option>Select Ownership</option>
-              <option>Government</option>
-              <option>Private</option>
-              <option>Religious</option>
-              <option>NGO</option>
-            </select>
-            <Input placeholder="Principal Name" />
-            <Input placeholder="Principal Email" type="email" />
-            <Input placeholder="Principal Phone" />
-            <Input placeholder="Bursar Name" />
-            <Input placeholder="District" />
-            <Input placeholder="City" />
-            <select className="w-full border border-gray-300 rounded px-3 py-2">
-              <option>Select Subscription Plan</option>
-              <option>Free</option>
-              <option>Basic</option>
-              <option>Professional</option>
-              <option>Enterprise</option>
-            </select>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">School Name *</label>
+              <Input
+                placeholder="e.g. Gideon High School Naggalama"
+                value={schoolName}
+                onChange={(e) => setSchoolName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">School Email *</label>
+              <Input
+                placeholder="e.g. admin@gideonhigh.ac.ug"
+                type="email"
+                value={schoolEmail}
+                onChange={(e) => setSchoolEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium block mb-1">School Type</label>
+                <select className="w-full border border-gray-300 rounded px-3 py-2">
+                  <option>Select Type</option>
+                  <option>Day School</option>
+                  <option>Boarding School</option>
+                  <option>Day & Boarding</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">Education Level</label>
+                <select className="w-full border border-gray-300 rounded px-3 py-2">
+                  <option>Select Level</option>
+                  <option>Primary (P1-P7)</option>
+                  <option>O-Level (S1-S4)</option>
+                  <option>A-Level (S5-S6)</option>
+                  <option>Mixed</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium block mb-1">Ownership</label>
+                <select className="w-full border border-gray-300 rounded px-3 py-2">
+                  <option>Select Ownership</option>
+                  <option>Government</option>
+                  <option>Private</option>
+                  <option>Religious</option>
+                  <option>NGO</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1">District</label>
+                <Input placeholder="e.g. Mukono" />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">Principal Name</label>
+              <Input placeholder="e.g. Mr. John Ssempijja" />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">Principal Phone</label>
+              <Input placeholder="e.g. 0700123456" />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">School Phone</label>
+              <Input placeholder="e.g. 0414123456" />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium block mb-1">Subscription Plan</label>
+              <select className="w-full border border-gray-300 rounded px-3 py-2">
+                <option>Select Plan</option>
+                <option>Free (50 students max)</option>
+                <option>Basic - UGX 100,000/month (500 students)</option>
+                <option>Professional - UGX 300,000/month (5,000 students)</option>
+                <option>Enterprise - UGX 800,000/month (50,000 students)</option>
+              </select>
+            </div>
+
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleAddSchool} className="flex-1">
-                Register School
+              <Button onClick={handleGenerateCode} className="flex-1 gap-2 bg-purple-600 hover:bg-purple-700">
+                <Link size={18} /> Generate Code & Link
               </Button>
-              <Button onClick={() => setShowAddSchool(false)} variant="outline" className="flex-1">
+              <Button onClick={handleCloseRegistration} variant="outline" className="flex-1">
                 Cancel
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Register School Modal - Step 2: Code Generated */}
+      <Dialog open={showCodeGenerated} onOpenChange={handleCloseRegistration}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <CheckCircle2 className="text-green-600" size={24} />
+              School Code Generated!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            {/* School Code Display */}
+            <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">Unique School Code</p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-4xl font-mono font-bold tracking-wider text-purple-700">
+                  {generatedCode}
+                </span>
+                <Button size="sm" variant="outline" onClick={handleCopyCode}>
+                  <Copy size={16} />
+                </Button>
+              </div>
+            </div>
+
+            {/* Registration Link */}
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded">
+              <p className="text-sm font-medium mb-2">Registration Link:</p>
+              <div className="flex items-center gap-2">
+                <code className="text-xs bg-white border px-2 py-1 rounded flex-1 overflow-hidden text-ellipsis">
+                  {generatedLink}
+                </code>
+                <Button size="sm" variant="outline" onClick={handleCopyLink}>
+                  <Copy size={14} />
+                </Button>
+              </div>
+            </div>
+
+            {/* School Info */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-sm text-blue-900">
+                <strong>School:</strong> {schoolName}
+              </p>
+              <p className="text-sm text-blue-900">
+                <strong>Email:</strong> {schoolEmail}
+              </p>
+            </div>
+
+            {/* Send Button */}
+            {!codeSent ? (
+              <Button
+                onClick={handleSendToSchool}
+                disabled={isSending}
+                className="w-full gap-2 bg-green-600 hover:bg-green-700 h-12"
+              >
+                {isSending ? (
+                  <>
+                    <span className="animate-spin">&#9696;</span> Sending to {schoolEmail}...
+                  </>
+                ) : (
+                  <>
+                    <Send size={18} /> Send Code & Link to School Email
+                  </>
+                )}
+              </Button>
+            ) : (
+              <div className="p-4 bg-green-50 border border-green-200 rounded text-center">
+                <CheckCircle2 className="text-green-600 mx-auto mb-2" size={32} />
+                <p className="font-bold text-green-900">Successfully Sent!</p>
+                <p className="text-sm text-green-700 mt-1">
+                  Registration link sent to <strong>{schoolEmail}</strong>
+                </p>
+                <p className="text-xs text-green-600 mt-2">
+                  The school will receive an email with the code and link to set up their account.
+                </p>
+              </div>
+            )}
+
+            {/* What happens next */}
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+              <p className="text-sm font-medium text-yellow-900 mb-2">What happens next:</p>
+              <ol className="text-xs text-yellow-800 space-y-1 list-decimal list-inside">
+                <li>School receives email with code and registration link</li>
+                <li>School clicks link and sees EduTrack onboarding page</li>
+                <li>School sets username (school name) and password</li>
+                <li>School uploads logo, motto, and vision</li>
+                <li>School gets access to their admin dashboard</li>
+              </ol>
+            </div>
+
+            <Button onClick={handleCloseRegistration} variant="outline" className="w-full">
+              Done - Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
