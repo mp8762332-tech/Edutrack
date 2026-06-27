@@ -169,7 +169,7 @@ export default function EnterprisePlatformOwner() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">My Subscription Revenue</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">UGX {(demoPlatformStats.monthlyRevenue / 1000000).toFixed(1)}M</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">UGX {(demoPlatformStats.monthlySubscriptionIncome / 1000000).toFixed(1)}M</p>
                 <p className="text-xs text-green-600 mt-1">+8% from last month (Author only)</p>
               </div>
               <DollarSign className="text-yellow-600" size={32} />
@@ -223,7 +223,7 @@ export default function EnterprisePlatformOwner() {
                       <TableRow key={school.id}>
                         <TableCell className="font-medium">{school.name}</TableCell>
                         <TableCell className="font-mono text-xs bg-gray-100 rounded px-2">{school.code}</TableCell>
-                        <TableCell>{school.level}</TableCell>
+                        <TableCell>{school.type}</TableCell>
                         <TableCell>{school.city}, {school.district}</TableCell>
                         <TableCell>{school.currentStudents}/{school.maxStudents}</TableCell>
                         <TableCell>
@@ -290,7 +290,7 @@ export default function EnterprisePlatformOwner() {
                   <div>
                     <div className="flex justify-between mb-2">
                       <p className="text-sm font-medium">Total Revenue</p>
-                      <p className="font-bold">UGX {(demoPlatformStats.totalRevenue / 1000000).toFixed(1)}M</p>
+                      <p className="font-bold">UGX {(demoPlatformStats.subscriptionRevenue / 1000000).toFixed(1)}M</p>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full" style={{ width: "100%" }} />
@@ -299,7 +299,7 @@ export default function EnterprisePlatformOwner() {
                   <div>
                     <div className="flex justify-between mb-2">
                       <p className="text-sm font-medium">Monthly Revenue</p>
-                      <p className="font-bold">UGX {(demoPlatformStats.monthlyRevenue / 1000000).toFixed(1)}M</p>
+                      <p className="font-bold">UGX {(demoPlatformStats.monthlySubscriptionIncome / 1000000).toFixed(1)}M</p>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full" style={{ width: "65%" }} />
@@ -307,7 +307,7 @@ export default function EnterprisePlatformOwner() {
                   </div>
                   <div className="p-3 bg-green-50 border border-green-200 rounded mt-4">
                     <p className="text-sm text-green-900">
-                      <strong>Average Revenue Per School:</strong> UGX {(demoPlatformStats.totalRevenue / demoPlatformStats.totalSchools / 1000).toFixed(0)}K
+                      <strong>Average Revenue Per School:</strong> UGX {(demoPlatformStats.subscriptionRevenue / demoPlatformStats.totalSchools / 1000).toFixed(0)}K
                     </p>
                   </div>
                 </div>
@@ -362,9 +362,9 @@ export default function EnterprisePlatformOwner() {
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded flex items-center justify-between">
                   <div>
                     <p className="font-bold text-yellow-900">Open Tickets</p>
-                    <p className="text-sm text-yellow-700">{demoPlatformStats.supportTickets} tickets awaiting response</p>
+                    <p className="text-sm text-yellow-700">{demoPlatformStats.expiringSubscriptions} subscriptions expiring soon</p>
                   </div>
-                  <span className="text-3xl font-bold text-yellow-600">{demoPlatformStats.supportTickets}</span>
+                  <span className="text-3xl font-bold text-yellow-600">{demoPlatformStats.expiringSubscriptions}</span>
                 </div>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="p-4 bg-red-50 border border-red-200 rounded">
@@ -443,26 +443,16 @@ export default function EnterprisePlatformOwner() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium block mb-1">School Type</label>
-                <select className="w-full border border-gray-300 rounded px-3 py-2">
-                  <option>Select Type</option>
-                  <option>Day School</option>
-                  <option>Boarding School</option>
-                  <option>Day & Boarding</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium block mb-1">Education Level</label>
-                <select className="w-full border border-gray-300 rounded px-3 py-2">
-                  <option>Select Level</option>
-                  <option>Primary (P1-P7)</option>
-                  <option>O-Level (S1-S4)</option>
-                  <option>A-Level (S5-S6)</option>
-                  <option>Mixed</option>
-                </select>
-              </div>
+            <div>
+              <label className="text-sm font-medium block mb-1">School Type *</label>
+              <select className="w-full border border-gray-300 rounded px-3 py-2">
+                <option>Select Type</option>
+                <option>Primary</option>
+                <option>Secondary</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Primary = Kindergarten + Lower Primary + Upper Primary (P1-P7) | Secondary = O-Level (S1-S4) + A-Level (S5-S6)
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

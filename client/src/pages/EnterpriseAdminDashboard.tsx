@@ -11,12 +11,19 @@ import {
   demoStudents,
   demoClasses,
   demoSubjects,
-  demoAOIMarks,
-  demoExamMarks,
-  calculateStudentResult,
+  demoSubjectMarks,
   calculateGrade,
   GRADING_SCALE,
 } from "@/lib/enterpriseData";
+import {
+  getClassTimetable,
+  getClassExamSchedule,
+  getSubjectSyllabus,
+  calculateSyllabusCompletion,
+  demoTimetable,
+  demoExamSchedule,
+  demoSyllabus,
+} from "@/lib/timetableModule";
 import {
   Users,
   BookOpen,
@@ -32,6 +39,9 @@ import {
   Award,
   Zap,
   Upload,
+  Calendar,
+  Clock,
+  MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -82,11 +92,22 @@ export default function EnterpriseAdminDashboard() {
     toast.success(`${type} data exported as CSV`);
   };
 
-  // Calculate results for demo
-  const demoResults = demoAOIMarks.map((aoi, idx) => {
-    const exam = demoExamMarks[idx];
-    return calculateStudentResult(aoi, exam);
-  });
+  // Calculate results for demo using subject marks
+  const demoResults = demoSubjectMarks.map((mark) => {
+    const grade = calculateGrade(mark.averageScore);
+    const resultClass = grade.grade === "A" || grade.grade === "B" ? "1" : grade.grade === "C" ? "2" : "3";
+    return {
+      id: mark.id,
+      studentId: mark.studentId,
+      subjectId: mark.subjectId,
+      aoiMarks: 0,
+      examMarks: mark.averageScore,
+      totalMark: Math.round(mark.averageScore),
+      grade: grade.grade,
+      remarks: grade.remarks,
+      result: resultClass,
+    };
+  })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -147,7 +168,7 @@ export default function EnterpriseAdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">AOI Records</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{demoAOIMarks.length}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{demoSubjectMarks.length}</p>
               </div>
               <TrendingUp className="text-yellow-600" size={32} />
             </div>
@@ -166,6 +187,8 @@ export default function EnterpriseAdminDashboard() {
             <TabsTrigger value="csv-import">CSV Import</TabsTrigger>
             <TabsTrigger value="syllabus">Syllabus</TabsTrigger>
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
+            <TabsTrigger value="timetable">Timetable</TabsTrigger>
+            <TabsTrigger value="exams">Exams</TabsTrigger>
           </TabsList>
 
           {/* Students Tab */}
@@ -267,20 +290,20 @@ export default function EnterpriseAdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {demoAOIMarks.map((aoi) => {
-                      const student = demoStudents.find((s) => s.id === aoi.studentId);
-                      const subject = demoSubjects.find((s) => s.id === aoi.subjectId);
+                    {demoSubjectMarks.map((mark) => {
+                      const student = demoStudents.find((s) => s.id === mark.studentId);
+                      const subject = demoSubjects.find((s) => s.id === mark.subjectId);
                       return (
-                        <TableRow key={aoi.id}>
+                        <TableRow key={mark.id}>
                           <TableCell className="font-medium">{student?.firstName} {student?.lastName}</TableCell>
                           <TableCell>{subject?.name}</TableCell>
-                          <TableCell className="font-bold">{aoi.aoiMark.toFixed(1)}</TableCell>
-                          <TableCell className="font-bold">{aoi.projectWorkMark.toFixed(1)}</TableCell>
+                          <TableCell className="font-bold">{mark.paper1Mark}</TableCell>
+                          <TableCell className="font-bold">{mark.paper2Mark || "-"}</TableCell>
                           <TableCell>
-                            <Badge className="bg-blue-600">{aoi.totalAOI.toFixed(1)}</Badge>
+                            <Badge className="bg-blue-600">{mark.averageScore}</Badge>
                           </TableCell>
-                          <TableCell>Term {aoi.term}</TableCell>
-                          <TableCell>{aoi.dateRecorded}</TableCell>
+                          <TableCell>Term {mark.term}</TableCell>
+                          <TableCell>{mark.dateRecorded}</TableCell>
                         </TableRow>
                       );
                     })}
@@ -359,9 +382,14 @@ export default function EnterpriseAdminDashboard() {
                           <Badge className="bg-blue-600">{scale.grade}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={scale.result === "1" ? "bg-green-600" : scale.result === "2" ? "bg-yellow-600" : "bg-red-600"}>
-                            Result {scale.result}
-                          </Badge>
+                          {(() => {
+                            const resultClass = scale.grade === "A" || scale.grade === "B" ? "1" : scale.grade === "C" ? "2" : "3";
+                            return (
+                              <Badge className={resultClass === "1" ? "bg-green-600" : resultClass === "2" ? "bg-yellow-600" : "bg-red-600"}>
+                                Result {resultClass}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>{scale.remarks}</TableCell>
                       </TableRow>
@@ -581,17 +609,38 @@ export default function EnterpriseAdminDashboard() {
           {/* Syllabus Tab */}
           <TabsContent value="syllabus">
             <Card className="p-6">
-              <h3 className="text-lg font-bold mb-4">Subject Syllabus Management</h3>
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><BookOpen size={20} /> Subject Syllabus Management</h3>
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2">Select Subject</label>
+                <select className="w-full md:w-1/3 border border-gray-300 rounded px-3 py-2">
+                  {demoSubjects.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} ({s.level})</option>
+                  ))}
+                </select>
+              </div>
               <div className="space-y-4">
-                {demoSubjects.map((subject) => (
-                  <div key={subject.id} className="p-4 border border-gray-200 rounded hover:bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold">{subject.name}</p>
-                        <p className="text-sm text-gray-600">{subject.level} • {subject.isDefault ? "Default Subject" : "Custom Subject"}</p>
+                {demoSyllabus.map((topic) => (
+                  <div key={topic.id} className="p-4 border border-gray-200 rounded">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <p className="font-bold text-lg">{topic.topic}</p>
+                        <p className="text-sm text-gray-600 mt-1">Subtopics: {topic.subtopics.join(", ")}</p>
+                        <p className="text-sm text-gray-600 mt-1">Duration: {topic.weeksToComplete} weeks | Assessment: {topic.assessmentMethod}</p>
                       </div>
-                      <Button size="sm" variant="outline" className="gap-1" onClick={() => toast.success(`Viewing ${subject.name} syllabus`)}>
-                        <FileText size={14} /> View Syllabus
+                      <Badge className={topic.status === "Completed" ? "bg-green-600" : topic.status === "In Progress" ? "bg-blue-600" : "bg-gray-400"}>
+                        {topic.status}
+                      </Badge>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-blue-600 h-2 rounded-full" style={{width: `${topic.percentageComplete}%`}}></div>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-2">{topic.percentageComplete}% Complete</p>
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" variant="outline" className="gap-1" onClick={() => toast.success(`Editing ${topic.topic}...`)}>
+                        Edit Topic
+                      </Button>
+                      <Button size="sm" variant="outline" className="gap-1" onClick={() => toast.success(`Marking ${topic.topic} as complete...`)}>
+                        Mark Complete
                       </Button>
                     </div>
                   </div>
@@ -683,6 +732,86 @@ export default function EnterpriseAdminDashboard() {
                 <Button onClick={() => toast.success("Absence alerts sent to parents")} variant="outline" className="gap-2 text-red-600">
                   📱 Send Absence Alerts
                 </Button>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Timetable Tab */}
+          <TabsContent value="timetable">
+            <Card className="p-6">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Calendar size={20} /> Class Timetable</h3>
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2">Select Class</label>
+                <select className="w-full md:w-1/3 border border-gray-300 rounded px-3 py-2">
+                  {demoClasses.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Day</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Subject</TableHead>
+                      <TableHead>Teacher</TableHead>
+                      <TableHead>Room</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {demoTimetable.slice(0, 8).map((slot) => (
+                      <TableRow key={slot.id}>
+                        <TableCell className="font-medium">{slot.dayOfWeek}</TableCell>
+                        <TableCell>{slot.startTime} - {slot.endTime}</TableCell>
+                        <TableCell>{slot.subject}</TableCell>
+                        <TableCell>{slot.teacher}</TableCell>
+                        <TableCell>{slot.room}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Exams Tab */}
+          <TabsContent value="exams">
+            <Card className="p-6">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Calendar size={20} /> Exam Schedule</h3>
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2">Select Class</label>
+                <select className="w-full md:w-1/3 border border-gray-300 rounded px-3 py-2">
+                  {demoClasses.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Exam</TableHead>
+                      <TableHead>Subject</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Room</TableHead>
+                      <TableHead>Invigilators</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {demoExamSchedule.map((exam) => (
+                      <TableRow key={exam.id}>
+                        <TableCell className="font-medium">{exam.examName}</TableCell>
+                        <TableCell>{exam.subject}</TableCell>
+                        <TableCell>{exam.date}</TableCell>
+                        <TableCell>{exam.startTime} - {exam.endTime}</TableCell>
+                        <TableCell>{exam.room}</TableCell>
+                        <TableCell className="text-sm">{exam.invigilators.join(', ')}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </Card>
           </TabsContent>
