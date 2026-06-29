@@ -53,3 +53,16 @@
 - [x] Implement data persistence and backup (Supabase backup strategy)
 - [x] Create deployment guide and documentation (DEPLOYMENT.md, TESTING.md)
 - [x] Test on actual A4 printer output (print-perfect component with CSS optimization)
+
+
+## Vercel + Supabase Migration (This Week)
+- [x] Update exam system - make mid-term optional, end-of-term mandatory
+- [x] Setup Supabase database and schema migration
+- [x] Configure environment variables for Supabase
+- [x] Remove demo accounts and test data (Home page updated)
+- [x] Create real school registration and onboarding flow (active)
+- [ ] Deploy to Vercel and test all features
+- [ ] Create migration guide and documentation
+- [ ] Verify A4 report card printing on Vercel deployment
+- [ ] Test marks entry, PDF export, WhatsApp sharing on production
+- [ ] Verify performance (<2 seconds for all operations)

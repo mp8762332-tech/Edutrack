@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -68,27 +67,6 @@ export default function Home() {
     },
   ];
 
-  const roles = [
-    {
-      title: "Platform Owner (Mark)",
-      description: "Manage all schools globally, track revenue, register new schools",
-      credentials: "mark / demo123",
-      features: ["Register schools with 6-digit codes", "Track subscription revenue", "Global analytics", "School management"],
-    },
-    {
-      title: "School Admin",
-      description: "Manage school operations, students, teachers, and academics",
-      credentials: "Gideon High School / demo123",
-      features: ["Student management", "Teacher registration via WhatsApp/Email", "CSV bulk import", "Report cards", "Attendance reports"],
-    },
-    {
-      title: "Teacher",
-      description: "Record marks, take attendance, access from anywhere",
-      credentials: "peter / demo123",
-      features: ["Record marks for assigned subjects only", "Daily attendance (Mon-Sat)", "Multi-school access", "Export marks as CSV"],
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Navigation */}
@@ -98,83 +76,92 @@ export default function Home() {
             <BookOpen className="text-purple-600" size={28} />
             <span className="text-2xl font-bold text-purple-600">EduTrack</span>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button onClick={() => setLocation("/enterprise-login")} className="gap-2 bg-purple-600 hover:bg-purple-700">
-              <Zap size={18} /> Launch Demo
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/multi-school-teacher-login")}
+            >
+              Teacher Login
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/author-dashboard")}
+            >
+              Admin
             </Button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 md:px-8 text-center">
-        <div className="max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Cloud size={16} /> Cloud-Based • Access Anywhere • Ultra Fast
+      <section className="pt-32 pb-20 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-block mb-4 px-4 py-2 bg-purple-100 rounded-full">
+            <span className="text-purple-700 text-sm font-semibold">
+              ☁️ Cloud-Based • Access Anywhere • Ultra Fast
+            </span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
             School Management Made Simple
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             A powerful, lightweight platform for managing academics, attendance, and report cards.
             Teachers access from any device. Schools data is safe on cloud even if computers are stolen.
           </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
-              onClick={() => setLocation("/enterprise-login")}
               size="lg"
-              className="gap-2 text-lg h-12 px-8 bg-purple-600 hover:bg-purple-700"
+              onClick={() => setLocation("/school-onboarding")}
+              className="bg-purple-600 hover:bg-purple-700"
             >
-              <Zap size={20} /> Try Interactive Demo
+              <Zap className="mr-2" size={20} />
+              Register Your School
             </Button>
             <Button
-              onClick={() => setLocation("/school-onboarding")}
               size="lg"
               variant="outline"
-              className="gap-2 text-lg h-12 px-8"
+              onClick={() => setLocation("/multi-school-teacher-login")}
             >
-              <ArrowRight size={20} /> School Onboarding
+              <ArrowRight className="mr-2" size={20} />
+              Teacher Access
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Key Stats */}
-      <section className="py-12 px-4 md:px-8 bg-purple-600 text-white">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      {/* Stats Section */}
+      <section className="bg-purple-600 text-white py-16 px-4">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
-            <p className="text-4xl font-bold">100K+</p>
-            <p className="text-purple-200 text-sm">Schools Supported</p>
+            <div className="text-4xl font-bold mb-2">100K+</div>
+            <div className="text-purple-100">Schools Supported</div>
           </div>
           <div>
-            <p className="text-4xl font-bold">50K+</p>
-            <p className="text-purple-200 text-sm">Students Per School</p>
+            <div className="text-4xl font-bold mb-2">50K+</div>
+            <div className="text-purple-100">Students Per School</div>
           </div>
           <div>
-            <p className="text-4xl font-bold">&lt;5min</p>
-            <p className="text-purple-200 text-sm">10,000 CSV Import</p>
+            <div className="text-4xl font-bold mb-2">&lt;5min</div>
+            <div className="text-purple-100">10,000 CSV Import</div>
           </div>
           <div>
-            <p className="text-4xl font-bold">&lt;100MB</p>
-            <p className="text-purple-200 text-sm">Mobile Storage</p>
+            <div className="text-4xl font-bold mb-2">&lt;100MB</div>
+            <div className="text-purple-100">Mobile Storage</div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-20 px-4 md:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">Key Features</h2>
-          <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
-            Everything a school needs to manage academics efficiently - no payment processing, just pure academic management.
-          </p>
+      {/* Features Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl font-bold text-center mb-16">Key Features</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, idx) => {
+            {features.map((feature, i) => {
               const Icon = feature.icon;
               return (
-                <Card key={idx} className="p-6 hover:shadow-lg transition">
+                <Card key={i} className="p-6 hover:shadow-lg transition-shadow">
                   <Icon className="text-purple-600 mb-4" size={32} />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
+                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                   <p className="text-gray-600">{feature.description}</p>
                 </Card>
               );
@@ -183,93 +170,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Demo Accounts Section */}
-      <section className="py-20 px-4 md:px-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">Three Access Levels</h2>
-          <p className="text-center text-gray-600 mb-16">Each role sees only what they need - strict data isolation</p>
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {roles.map((role, idx) => (
-              <Card key={idx} className="p-8 hover:shadow-lg transition">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{role.title}</h3>
-                <p className="text-gray-600 mb-4">{role.description}</p>
-                <p className="text-sm text-purple-600 font-mono mb-4 bg-purple-50 px-2 py-1 rounded">{role.credentials}</p>
-                <div className="space-y-2">
-                  {role.features.map((feature, fidx) => (
-                    <div key={fidx} className="flex items-center gap-2 text-gray-700 text-sm">
-                      <CheckCircle size={14} className="text-green-600 flex-shrink-0" />
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-          <div className="text-center">
-            <Button
-              onClick={() => setLocation("/enterprise-login")}
-              size="lg"
-              className="gap-2 text-lg h-12 px-8 bg-purple-600 hover:bg-purple-700"
-            >
-              <Zap size={20} /> Try All Roles Now
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 px-4 md:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-16 text-gray-900">How It Works</h2>
-          <div className="grid md:grid-cols-4 gap-8">
-            {[
-              { step: "1", title: "Register School", desc: "Platform owner generates 6-digit code and sends link to school email" },
-              { step: "2", title: "School Setup", desc: "School clicks link, sets username/password, uploads logo and motto" },
-              { step: "3", title: "Import Data", desc: "Admin uploads CSV from Excel - 10,000 students created in under 5 minutes" },
-              { step: "4", title: "Start Teaching", desc: "Teachers get invite links, set credentials, and start recording marks" },
-            ].map((item, idx) => (
-              <div key={idx} className="text-center">
-                <div className="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
-                  {item.step}
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
-      <section className="py-20 px-4 md:px-8 bg-gradient-to-r from-purple-600 to-purple-800 text-white">
+      <section className="bg-gray-900 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to See It in Action?</h2>
-          <p className="text-xl mb-8 text-purple-100">
-            Explore the interactive demo with pre-loaded data and all features enabled.
-            No sign-up required.
+          <h2 className="text-4xl font-bold mb-6">Ready to Transform Your School?</h2>
+          <p className="text-xl text-gray-300 mb-8">
+            Start managing your school's academics, attendance, and report cards today.
+            No credit card required.
           </p>
           <Button
-            onClick={() => setLocation("/enterprise-login")}
             size="lg"
-            className="gap-2 text-lg h-12 px-8 bg-white text-purple-600 hover:bg-gray-100"
+            onClick={() => setLocation("/school-onboarding")}
+            className="bg-purple-600 hover:bg-purple-700"
           >
-            <Zap size={20} /> Launch Demo
+            <CheckCircle className="mr-2" size={20} />
+            Register Your School Now
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <BookOpen className="text-purple-400" size={24} />
-            <span className="text-xl font-bold text-white">EduTrack</span>
+      <footer className="bg-gray-100 border-t border-gray-200 py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h4 className="font-semibold mb-4">Product</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-purple-600">Features</a></li>
+                <li><a href="#" className="hover:text-purple-600">Pricing</a></li>
+                <li><a href="#" className="hover:text-purple-600">Security</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-purple-600">About</a></li>
+                <li><a href="#" className="hover:text-purple-600">Blog</a></li>
+                <li><a href="#" className="hover:text-purple-600">Contact</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-purple-600">Privacy</a></li>
+                <li><a href="#" className="hover:text-purple-600">Terms</a></li>
+                <li><a href="#" className="hover:text-purple-600">Support</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Connect</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-purple-600">Twitter</a></li>
+                <li><a href="#" className="hover:text-purple-600">LinkedIn</a></li>
+                <li><a href="#" className="hover:text-purple-600">Facebook</a></li>
+              </ul>
+            </div>
           </div>
-          <p className="mb-4">Enterprise School Management System</p>
-          <p className="text-sm">
-            Cloud-based academic management for schools of all sizes. Access from any device, anywhere.
-          </p>
-          <p className="text-xs mt-4">© 2024 EduTrack. All rights reserved.</p>
+          <div className="border-t border-gray-300 pt-8 text-center text-gray-600">
+            <p>&copy; 2026 EduTrack. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>

@@ -104,6 +104,8 @@ export const examTypes = mysqlTable("examTypes", {
   year: int("year"),
   startDate: varchar("startDate", { length: 10 }), // YYYY-MM-DD
   endDate: varchar("endDate", { length: 10 }),
+  isOptional: boolean("isOptional").default(false), // Mid-term can be optional
+  isMandatory: boolean("isMandatory").default(true), // End-of-term is always mandatory
   isActive: boolean("isActive").default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
