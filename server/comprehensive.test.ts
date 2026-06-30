@@ -21,33 +21,33 @@ import { calculateGrade, GRADING_SCALE } from "../client/src/lib/enterpriseData"
 
 describe("Grading System", () => {
   it("should calculate correct grade for marks 100-80", () => {
-    expect(calculateGrade(90)).toBe("A");
-    expect(calculateGrade(85)).toBe("A");
-    expect(calculateGrade(80)).toBe("A");
+    expect(calculateGrade(90).grade).toBe("A");
+    expect(calculateGrade(85).grade).toBe("A");
+    expect(calculateGrade(80).grade).toBe("A");
   });
 
   it("should calculate correct grade for marks 79-60", () => {
-    expect(calculateGrade(75)).toBe("B");
-    expect(calculateGrade(70)).toBe("B");
-    expect(calculateGrade(60)).toBe("B");
+    expect(calculateGrade(75).grade).toBe("B");
+    expect(calculateGrade(70).grade).toBe("B");
+    expect(calculateGrade(60).grade).toBe("B");
   });
 
   it("should calculate correct grade for marks 59-49", () => {
-    expect(calculateGrade(55)).toBe("C");
-    expect(calculateGrade(50)).toBe("C");
-    expect(calculateGrade(49)).toBe("C");
+    expect(calculateGrade(55).grade).toBe("C");
+    expect(calculateGrade(50).grade).toBe("C");
+    expect(calculateGrade(49).grade).toBe("C");
   });
 
   it("should calculate correct grade for marks 39-20", () => {
-    expect(calculateGrade(35)).toBe("D");
-    expect(calculateGrade(25)).toBe("D");
-    expect(calculateGrade(20)).toBe("D");
+    expect(calculateGrade(35).grade).toBe("D");
+    expect(calculateGrade(25).grade).toBe("D");
+    expect(calculateGrade(20).grade).toBe("D");
   });
 
   it("should calculate correct grade for marks 29-0", () => {
-    expect(calculateGrade(15)).toBe("E");
-    expect(calculateGrade(10)).toBe("E");
-    expect(calculateGrade(0)).toBe("E");
+    expect(calculateGrade(15).grade).toBe("E");
+    expect(calculateGrade(10).grade).toBe("E");
+    expect(calculateGrade(0).grade).toBe("E");
   });
 
   it("should have correct grading scale entries", () => {
@@ -64,8 +64,8 @@ describe("Paper Averaging", () => {
     const paper1 = 80;
     const paper2 = 60;
     const average = (paper1 + paper2) / 2;
-    expect(average).toBe(70);
-    expect(calculateGrade(average)).toBe("B");
+    expect(average).toBeCloseTo(70, 1);
+    expect(calculateGrade(average).grade).toBe("B");
   });
 
   it("should handle paper marks beyond 100", () => {
@@ -267,7 +267,7 @@ describe("Attendance Tracking", () => {
     const presentDays = 4;
     const totalDays = 6;
     const percentage = (presentDays / totalDays) * 100;
-    expect(percentage).toBe(66.67);
+    expect(percentage).toBeCloseTo(66.67, 1);
   });
 });
 

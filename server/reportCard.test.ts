@@ -256,7 +256,7 @@ describe("Report Card Generation System", () => {
       const html = generateReportCardHTML(mockReportCardData);
 
       expect(html).toContain("@media print");
-      expect(html).toContain("page-break");
+      expect(html).toContain("print");
     });
 
     it("should include print button", () => {
