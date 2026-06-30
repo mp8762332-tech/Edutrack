@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Download, Share2, Printer } from "lucide-react";
-import { exportElementToPDF, shareViaWhatsApp, shareViaEmail } from "@/lib/pdfExport";
+import { exportElementToPDF, shareViaWhatsApp } from "@/lib/pdfExport";
 
 export function MarksEntry() {
   const [selectedClass, setSelectedClass] = useState<string>("");
@@ -19,20 +19,19 @@ export function MarksEntry() {
   const [marks, setMarks] = useState<Array<{ studentId: number; paper1: number; paper2: number; comment: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch classes
-  const { data: classes } = trpc.schools.getDashboard.useQuery();
+  // Fetch real data from database
+  const { data: classes = [] } = trpc.classes.list.useQuery({} as any);
+  const { data: examTypes = [] } = trpc.examTypes.list.useQuery({} as any);
+  const { data: subjects = [] } = trpc.subjects.list.useQuery({} as any);
 
   // Fetch students in selected class
-  const { data: students } = trpc.students.list.useQuery(
+  const { data: students = [] } = trpc.students.list.useQuery(
     { classId: parseInt(selectedClass) || 0 },
     { enabled: !!selectedClass }
   );
 
-  // Fetch exam types
-  const { data: examTypes } = trpc.marks.getClassStats.useQuery(
-    { classId: parseInt(selectedClass) || 0, examTypeId: parseInt(selectedExam) || 0 },
-    { enabled: !!selectedClass && !!selectedExam }
-  );
+  // Create mutation at component level
+  const marksMutation = trpc.marks.bulkEnter.useMutation();
 
   const handleMarkChange = (studentId: number, field: string, value: number | string) => {
     setMarks((prev) => {
@@ -59,7 +58,7 @@ export function MarksEntry() {
 
     setIsSubmitting(true);
     try {
-      const result = await trpc.marks.bulkEnter.useMutation().mutateAsync({
+      const result = await marksMutation.mutateAsync({
         examTypeId: parseInt(selectedExam),
         subjectId: parseInt(selectedSubject),
         classId: parseInt(selectedClass),
@@ -73,8 +72,8 @@ export function MarksEntry() {
 
       toast.success(`Marks entered successfully: ${result.entered} students`);
       setMarks([]);
-    } catch (error) {
-      toast.error("Failed to enter marks");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to enter marks");
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -91,9 +90,9 @@ export function MarksEntry() {
       const htmlContent = `
         <div style="font-family: Arial; padding: 20px;">
           <h2>Marks Report</h2>
-          <p><strong>Class:</strong> ${selectedClass}</p>
-          <p><strong>Exam:</strong> ${selectedExam}</p>
-          <p><strong>Subject:</strong> ${selectedSubject}</p>
+          <p><strong>Class:</strong> ${classes.find((c) => c.id === parseInt(selectedClass))?.name || selectedClass}</p>
+          <p><strong>Exam:</strong> ${examTypes.find((e) => e.id === parseInt(selectedExam))?.name || selectedExam}</p>
+          <p><strong>Subject:</strong> ${subjects.find((s) => s.id === parseInt(selectedSubject))?.name || selectedSubject}</p>
           <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
             <tr style="background-color: #f0f0f0;">
               <th style="border: 1px solid #000; padding: 8px;">Student ID</th>
@@ -120,8 +119,8 @@ export function MarksEntry() {
       element.innerHTML = htmlContent;
       await exportElementToPDF(element, { filename: "marks_report.pdf" });
       toast.success("Report card PDF generated");
-    } catch (error) {
-      toast.error("Failed to generate PDF");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to generate PDF");
       console.error(error);
     }
   };
@@ -132,7 +131,11 @@ export function MarksEntry() {
       return;
     }
 
-    const message = `Marks Entry Summary:\nClass: ${selectedClass}\nExam: ${selectedExam}\nSubject: ${selectedSubject}\nStudents: ${marks.length}`;
+    const className = classes.find((c) => c.id === parseInt(selectedClass))?.name || selectedClass;
+    const examName = examTypes.find((e) => e.id === parseInt(selectedExam))?.name || selectedExam;
+    const subjectName = subjects.find((s) => s.id === parseInt(selectedSubject))?.name || selectedSubject;
+
+    const message = `Marks Entry Summary:\nClass: ${className}\nExam: ${examName}\nSubject: ${subjectName}\nStudents: ${marks.length}`;
     shareViaWhatsApp(message);
   };
 
@@ -160,12 +163,11 @@ export function MarksEntry() {
                   <SelectValue placeholder="Choose class" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">S1</SelectItem>
-                  <SelectItem value="2">S2</SelectItem>
-                  <SelectItem value="3">S3</SelectItem>
-                  <SelectItem value="4">S4</SelectItem>
-                  <SelectItem value="5">S5</SelectItem>
-                  <SelectItem value="6">S6</SelectItem>
+                  {classes.map((cls) => (
+                    <SelectItem key={cls.id} value={cls.id.toString()}>
+                      {cls.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </CardContent>
@@ -181,9 +183,11 @@ export function MarksEntry() {
                   <SelectValue placeholder="Choose exam" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Mid-Term Exam</SelectItem>
-                  <SelectItem value="2">End-of-Term Exam</SelectItem>
-                  <SelectItem value="3">Final Exam</SelectItem>
+                  {examTypes.map((exam) => (
+                    <SelectItem key={exam.id} value={exam.id.toString()}>
+                      {exam.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </CardContent>
@@ -199,11 +203,11 @@ export function MarksEntry() {
                   <SelectValue placeholder="Choose subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Mathematics</SelectItem>
-                  <SelectItem value="2">English</SelectItem>
-                  <SelectItem value="3">Science</SelectItem>
-                  <SelectItem value="4">Social Studies</SelectItem>
-                  <SelectItem value="5">Computer Studies</SelectItem>
+                  {subjects.map((subj) => (
+                    <SelectItem key={subj.id} value={subj.id.toString()}>
+                      {subj.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </CardContent>

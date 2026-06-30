@@ -175,3 +175,97 @@
     }
   }
 }
+
+
+/* Print Styles for Report Cards */
+@media print {
+  /* Hide UI elements not needed for print */
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  /* Hide buttons, navigation, and other UI elements */
+  button,
+  .flex.gap-4,
+  [class*="gap-4"],
+  .space-y-6 > div:first-child,
+  .grid.grid-cols-1,
+  .md\:grid-cols-3 {
+    display: none !important;
+  }
+
+  /* Report card container */
+  div[style*="210mm"] {
+    width: 210mm !important;
+    height: 297mm !important;
+    padding: 15mm !important;
+    margin: 0 !important;
+    page-break-after: always !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure all content is visible */
+  * {
+    box-shadow: none !important;
+    background-clip: padding-box !important;
+  }
+
+  /* Page breaks */
+  .page-break {
+    page-break-after: always;
+  }
+
+  /* Preserve borders and boxes */
+  table,
+  td,
+  tr {
+    border: inherit !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Keep text black for printing */
+  * {
+    color: #000 !important;
+    background-color: white !important;
+  }
+
+  /* Preserve specific styling */
+  [style*="borderBottom"],
+  [style*="border"] {
+    border: inherit !important;
+  }
+
+  /* Ensure images print */
+  img {
+    max-width: 100% !important;
+  }
+
+  /* Remove margins that cause page breaks */
+  @page {
+    margin: 0;
+    size: A4 portrait;
+  }
+
+  /* Prevent orphaned text */
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-inside: avoid;
+    page-break-after: avoid;
+  }
+}
+
+/* Screen preview of report card */
+@media screen {
+  div[style*="210mm"] {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    background: white;
+  }
+}

@@ -4,6 +4,9 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { schoolsRouter } from "./routers/schools";
 import { studentsRouter } from "./routers/students";
+import { classesRouter } from "./routers/classes";
+import { subjectsRouter } from "./routers/subjects";
+import { examTypesRouter } from "./routers/examTypes";
 import { marksRouter } from "./routers/marks";
 import { reportCardsRouter } from "./routers/reportCards";
 import { attendanceRouter } from "./routers/attendance";
@@ -26,6 +29,9 @@ export const appRouter = router({
 
   schools: schoolsRouter,
   students: studentsRouter,
+  classes: classesRouter,
+  subjects: subjectsRouter,
+  examTypes: examTypesRouter,
   marks: marksRouter,
   reportCards: reportCardsRouter,
   attendance: attendanceRouter,

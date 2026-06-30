@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Download, Printer, Share2 } from "lucide-react";
-import { exportElementToPDF } from "@/lib/pdfExport";
+import { exportElementToPDF, shareViaWhatsApp } from "@/lib/pdfExport";
 
 export function ReportCardGeneration() {
   const [selectedClass, setSelectedClass] = useState<string>("");
@@ -15,11 +15,24 @@ export function ReportCardGeneration() {
   const [selectedStudent, setSelectedStudent] = useState<string>("");
   const reportCardRef = useRef<HTMLDivElement>(null);
 
+  // Fetch real data from database
+  const { data: classes = [] } = trpc.classes.list.useQuery({} as any);
+  const { data: examTypes = [] } = trpc.examTypes.list.useQuery({} as any);
+
+  // Fetch students in selected class
+  const { data: students = [] } = trpc.students.list.useQuery(
+    { classId: parseInt(selectedClass) || 0 },
+    { enabled: !!selectedClass }
+  );
+
   // Fetch report cards for selected class
-  const { data: reportCards } = trpc.reportCards.getByClass.useQuery(
+  const { data: reportCards = [] } = trpc.reportCards.getByClass.useQuery(
     { classId: parseInt(selectedClass) || 0, examTypeId: parseInt(selectedExam) || 0 },
     { enabled: !!selectedClass && !!selectedExam }
   );
+
+  // Create mutation at component level
+  const generateClassMutation = trpc.reportCards.generateClass.useMutation();
 
   const handleGenerateClass = async () => {
     if (!selectedClass || !selectedExam) {
@@ -28,14 +41,14 @@ export function ReportCardGeneration() {
     }
 
     try {
-      const result = await trpc.reportCards.generateClass.useMutation().mutateAsync({
+      const result = await generateClassMutation.mutateAsync({
         classId: parseInt(selectedClass),
         examTypeId: parseInt(selectedExam),
       });
 
       toast.success(`Generated ${result.generated} report cards`);
-    } catch (error) {
-      toast.error("Failed to generate report cards");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to generate report cards");
       console.error(error);
     }
   };
@@ -47,15 +60,20 @@ export function ReportCardGeneration() {
     }
 
     try {
+      const selectedStudentData = students.find((s) => s.id === parseInt(selectedStudent));
+      const filename = selectedStudentData
+        ? `report_card_${selectedStudentData.admissionNumber}.pdf`
+        : `report_card_${selectedStudent}.pdf`;
+
       await exportElementToPDF(reportCardRef.current, {
-        filename: `report_card_${selectedStudent}.pdf`,
+        filename,
         format: "a4",
         orientation: "portrait",
         margin: [15, 15, 15, 15],
       });
       toast.success("Report card exported as PDF");
-    } catch (error) {
-      toast.error("Failed to export PDF");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to export PDF");
       console.error(error);
     }
   };
@@ -75,9 +93,13 @@ export function ReportCardGeneration() {
   };
 
   const handleShareWhatsApp = () => {
-    const message = `Report Card: ${selectedStudent} - ${selectedClass} - ${selectedExam}`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank");
+    const className = classes.find((c) => c.id === parseInt(selectedClass))?.name || selectedClass;
+    const examName = examTypes.find((e) => e.id === parseInt(selectedExam))?.name || selectedExam;
+    const studentData = students.find((s) => s.id === parseInt(selectedStudent));
+    const studentName = studentData ? studentData.admissionNumber : selectedStudent;
+
+    const message = `Report Card: ${studentName} - ${className} - ${examName}`;
+    shareViaWhatsApp(message);
   };
 
   return (
@@ -100,12 +122,11 @@ export function ReportCardGeneration() {
                   <SelectValue placeholder="Choose class" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">S1</SelectItem>
-                  <SelectItem value="2">S2</SelectItem>
-                  <SelectItem value="3">S3</SelectItem>
-                  <SelectItem value="4">S4</SelectItem>
-                  <SelectItem value="5">S5</SelectItem>
-                  <SelectItem value="6">S6</SelectItem>
+                  {classes.map((cls) => (
+                    <SelectItem key={cls.id} value={cls.id.toString()}>
+                      {cls.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </CardContent>
@@ -121,9 +142,11 @@ export function ReportCardGeneration() {
                   <SelectValue placeholder="Choose exam" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Mid-Term Exam</SelectItem>
-                  <SelectItem value="2">End-of-Term Exam</SelectItem>
-                  <SelectItem value="3">Final Exam</SelectItem>
+                  {examTypes.map((exam) => (
+                    <SelectItem key={exam.id} value={exam.id.toString()}>
+                      {exam.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </CardContent>
@@ -139,9 +162,9 @@ export function ReportCardGeneration() {
                   <SelectValue placeholder="Choose student" />
                 </SelectTrigger>
                 <SelectContent>
-                  {reportCards?.map((card) => (
-                    <SelectItem key={card.id} value={card.id.toString()}>
-                      Student {card.studentId}
+                  {students.map((student) => (
+                    <SelectItem key={student.id} value={student.id.toString()}>
+                      {student.admissionNumber}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -173,7 +196,7 @@ export function ReportCardGeneration() {
         </div>
 
         {/* Report Card Preview */}
-        {selectedStudent && (
+        {selectedStudent && students.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Report Card Preview</CardTitle>
@@ -182,12 +205,12 @@ export function ReportCardGeneration() {
             <CardContent className="overflow-auto">
               <ProductionReportCard
                 ref={reportCardRef}
-                studentName="John Doe"
-                admissionNumber="ADM001"
-                className="S1"
+                studentName={students.find((s) => s.id === parseInt(selectedStudent))?.admissionNumber || "Student"}
+                admissionNumber={students.find((s) => s.id === parseInt(selectedStudent))?.admissionNumber || "ADM001"}
+                className={classes.find((c) => c.id === parseInt(selectedClass))?.name || "Class"}
                 term="Term 1"
-                year={2024}
-                schoolName="Example School"
+                year={new Date().getFullYear()}
+                schoolName="EduTrack School"
                 marks={[
                   { subject: "Mathematics", paper1: 85, paper2: 88, average: 86.5, grade: "A", remark: "Excellent" },
                   { subject: "English", paper1: 78, paper2: 82, average: 80, grade: "A", remark: "Very Good" },
@@ -195,12 +218,12 @@ export function ReportCardGeneration() {
                   { subject: "Social Studies", paper1: 75, paper2: 79, average: 77, grade: "B", remark: "Good" },
                 ]}
                 position={3}
-                totalStudents={45}
+                totalStudents={students.length}
                 averageScore={83.6}
-                teacherComment="John is a diligent student with good performance across all subjects."
+                teacherComment="Student is performing well across all subjects."
                 principalComment="Keep up the excellent work!"
-                principalName="Dr. Jane Smith"
-                classTeacher="Mr. Peter Johnson"
+                principalName="Principal"
+                classTeacher="Class Teacher"
               />
             </CardContent>
           </Card>
