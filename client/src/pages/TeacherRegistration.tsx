@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Mail, MessageCircle, ArrowRight, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface RegistrationStep {
   step: 1 | 2 | 3;
@@ -21,10 +23,25 @@ interface RegistrationStep {
 
 export default function TeacherRegistration() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [formData, setFormData] = useState<RegistrationStep>({ step: 1 });
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
+
+  // Use real tRPC mutation for teacher creation
+  const createTeacherMutation = trpc.teachers.create.useMutation({
+    onSuccess: () => {
+      toast.success("Teacher invitation sent successfully");
+      setRegistrationComplete(true);
+      setTimeout(() => {
+        setLocation("/enterprise-admin");
+      }, 2000);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to register teacher");
+    },
+  });
 
   const handleStep1 = () => {
     if (!formData.teacherName || !formData.contact || !formData.contactMethod) {
@@ -50,14 +67,26 @@ export default function TeacherRegistration() {
     setShowConfirmation(true);
   };
 
-  const confirmSend = () => {
-    const method = formData.contactMethod === "whatsapp" ? "WhatsApp" : "Email";
-    toast.success(`Invitation sent via ${method} to ${formData.contact}`);
-    setShowConfirmation(false);
-    setRegistrationComplete(true);
-    setTimeout(() => {
-      setLocation("/enterprise-admin");
-    }, 2000);
+  const confirmSend = async () => {
+    if (!user?.schoolId) {
+      toast.error("School ID not found");
+      return;
+    }
+
+    try {
+      await createTeacherMutation.mutateAsync({
+        schoolId: user.schoolId,
+        name: formData.teacherName || "",
+        email: formData.contact || "",
+        phone: "",
+        employeeId: `EMP${Date.now()}`,
+        qualification: formData.role || "",
+        position: (formData.position as any) || "regular_teacher",
+      });
+      setShowConfirmation(false);
+    } catch (error) {
+      console.error("Error creating teacher:", error);
+    }
   };
 
   if (registrationComplete) {
@@ -315,9 +344,9 @@ export default function TeacherRegistration() {
                 <Button onClick={() => setStep(2)} variant="outline" className="flex-1">
                   Back
                 </Button>
-                <Button onClick={handleSendInvitation} className="flex-1 gap-2 bg-green-600 hover:bg-green-700">
-                  <MessageCircle size={18} /> Send Invitation
-                </Button>
+              <Button onClick={handleSendInvitation} className="flex-1 gap-2 bg-green-600 hover:bg-green-700" disabled={createTeacherMutation.isPending}>
+                <MessageCircle size={18} /> {createTeacherMutation.isPending ? "Sending..." : "Send Invitation"}
+              </Button>
               </div>
             </div>
           </Card>
@@ -342,8 +371,8 @@ export default function TeacherRegistration() {
               <Button onClick={() => setShowConfirmation(false)} variant="outline" className="flex-1">
                 Cancel
               </Button>
-              <Button onClick={confirmSend} className="flex-1 bg-green-600 hover:bg-green-700">
-                Send Invitation
+              <Button onClick={confirmSend} className="flex-1 bg-green-600 hover:bg-green-700" disabled={createTeacherMutation.isPending}>
+                {createTeacherMutation.isPending ? "Sending..." : "Send Invitation"}
               </Button>
             </div>
           </div>
