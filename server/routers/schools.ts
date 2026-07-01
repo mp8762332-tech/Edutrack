@@ -1,256 +1,179 @@
-/**
- * Schools Router - School management, registration, and admin functions
- */
-
-import { router, publicProcedure, protectedProcedure, adminProcedure } from "../_core/trpc";
-import { z } from "zod";
+import { router, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { schools, users, classes, students, teachers } from "../../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { z } from "zod";
+import { schools } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const schoolsRouter = router({
-  /**
-   * Get all schools (Author only)
-   */
-  list: adminProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
-
-    const allSchools = await db.select().from(schools).execute();
-    return allSchools;
-  }),
-
-  /**
-   * Get school by ID
-   */
-  getById: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async ({ input, ctx }) => {
-      const db = await getDb();
-      if (!db) throw new Error("Database not available");
-
-      const school = await db
-        .select()
-        .from(schools)
-        .where(eq(schools.id, input.id))
-        .execute();
-
-      if (!school[0]) throw new Error("School not found");
-
-      // Check authorization
-      if (ctx.user.role === "school_admin" && ctx.user.schoolId !== input.id) {
-        throw new Error("Unauthorized");
-      }
-
-      return school[0];
-    }),
-
-  /**
-   * Get current user's school
-   */
-  getCurrent: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.user.schoolId) throw new Error("User not associated with school");
-
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
-
-    const school = await db
-      .select()
-      .from(schools)
-      .where(eq(schools.id, ctx.user.schoolId))
-      .execute();
-
-    return school[0] || null;
-  }),
-
-  /**
-   * Register new school
-   */
-  register: publicProcedure
+  create: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(3),
-        code: z.string().length(6),
+        name: z.string().min(1),
         type: z.enum(["primary", "secondary"]),
-        motto: z.string().optional(),
-        vision: z.string().optional(),
+        ownership: z.enum(["government", "private", "religious", "ngo"]),
         district: z.string().optional(),
         principalName: z.string().optional(),
         principalPhone: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("Database not available");
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-      // Check if code already exists
-      const existing = await db
-        .select()
-        .from(schools)
-        .where(eq(schools.code, input.code))
-        .execute();
+      if (ctx.user.role !== "author") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only authors can register schools" });
+      }
 
-      if (existing.length > 0) throw new Error("School code already exists");
+      let code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      let existing = await db.select().from(schools).where(eq(schools.code, code)).limit(1);
 
-      await db
+      while (existing.length > 0) {
+        code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        existing = await db.select().from(schools).where(eq(schools.code, code)).limit(1);
+      }
+
+      const newSchool = await db
         .insert(schools)
         .values({
           name: input.name,
-          code: input.code,
+          code,
           type: input.type,
-          motto: input.motto,
-          vision: input.vision,
+          ownership: input.ownership,
           district: input.district,
           principalName: input.principalName,
           principalPhone: input.principalPhone,
-          subscriptionPlan: "free",
-          isActive: true,
-        })
-        .execute();
+          isActive: false,
+        });
 
-      return { success: true, code: input.code };
+      return {
+        code,
+        name: input.name,
+      };
     }),
 
-  /**
-   * Update school details
-   */
+  getById: protectedProcedure
+    .input(z.object({ schoolId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      const result = await db.select().from(schools).where(eq(schools.id, input.schoolId)).limit(1);
+
+      if (result.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "School not found" });
+      }
+
+      const school = result[0];
+
+      if (ctx.user.role === "school_admin" && ctx.user.schoolId !== input.schoolId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+      }
+
+      return school;
+    }),
+
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+    if (ctx.user.role !== "author") {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Only authors can list all schools" });
+    }
+
+    return await db.select().from(schools);
+  }),
+
   update: protectedProcedure
     .input(
       z.object({
-        id: z.number(),
-        name: z.string().optional(),
+        schoolId: z.number(),
         motto: z.string().optional(),
         vision: z.string().optional(),
         logoUrl: z.string().optional(),
-        principalName: z.string().optional(),
-        principalPhone: z.string().optional(),
       })
     )
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ ctx, input }) => {
       const db = await getDb();
-      if (!db) throw new Error("Database not available");
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-      // Check authorization
-      if (ctx.user.role === "school_admin" && ctx.user.schoolId !== input.id) {
-        throw new Error("Unauthorized");
+      if (ctx.user.role !== "school_admin" || ctx.user.schoolId !== input.schoolId) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
       }
 
       await db
         .update(schools)
         .set({
-          name: input.name,
           motto: input.motto,
           vision: input.vision,
           logoUrl: input.logoUrl,
-          principalName: input.principalName,
-          principalPhone: input.principalPhone,
         })
-        .where(eq(schools.id, input.id))
-        .execute();
+        .where(eq(schools.id, input.schoolId));
 
-      return { success: true };
+      const result = await db.select().from(schools).where(eq(schools.id, input.schoolId)).limit(1);
+      return result[0];
     }),
 
-  /**
-   * Get school statistics
-   */
-  getStats: protectedProcedure
-    .input(z.object({ schoolId: z.number() }))
-    .query(async ({ input, ctx }) => {
+  verifyCode: protectedProcedure
+    .input(z.object({ code: z.string() }))
+    .query(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new Error("Database not available");
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-      // Check authorization
-      if (ctx.user.role === "school_admin" && ctx.user.schoolId !== input.schoolId) {
-        throw new Error("Unauthorized");
+      const result = await db.select().from(schools).where(eq(schools.code, input.code)).limit(1);
+
+      if (result.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Invalid code" });
       }
 
-      const schoolData = await db
-        .select()
-        .from(schools)
-        .where(eq(schools.id, input.schoolId))
-        .execute();
-
-      const schoolUsers = await db
-        .select()
-        .from(users)
-        .where(eq(users.schoolId, input.schoolId))
-        .execute();
-
-      const schoolClasses = await db
-        .select()
-        .from(classes)
-        .where(eq(classes.schoolId, input.schoolId))
-        .execute();
-
-      const schoolStudents = await db
-        .select()
-        .from(students)
-        .where(eq(students.schoolId, input.schoolId))
-        .execute();
-
-      const schoolTeachers = await db
-        .select()
-        .from(teachers)
-        .where(eq(teachers.schoolId, input.schoolId))
-        .execute();
-
+      const school = result[0];
       return {
-        school: schoolData[0],
-        stats: {
-          totalUsers: schoolUsers.length,
-          totalClasses: schoolClasses.length,
-          totalStudents: schoolStudents.length,
-          totalTeachers: schoolTeachers.length,
-          admins: schoolUsers.filter((u) => u.role === "school_admin").length,
-          teachers: schoolUsers.filter((u) => u.role === "teacher").length,
-          students: schoolUsers.filter((u) => u.role === "student").length,
-        },
+        id: school.id,
+        name: school.name,
+        isActive: school.isActive,
       };
     }),
 
-  /**
-   * Get school dashboard data
-   */
-  getDashboard: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.user.schoolId) throw new Error("User not associated with school");
+  completeRegistration: protectedProcedure
+    .input(
+      z.object({
+        schoolId: z.number(),
+        code: z.string(),
+        password: z.string().min(6),
+        motto: z.string().optional(),
+        vision: z.string().optional(),
+        logoUrl: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+      const result = await db.select().from(schools).where(eq(schools.id, input.schoolId)).limit(1);
 
-    const school = await db
-      .select()
-      .from(schools)
-      .where(eq(schools.id, ctx.user.schoolId))
-      .execute();
+      if (result.length === 0 || result[0].code !== input.code) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid code" });
+      }
 
-    const stats = await db
-      .select()
-      .from(users)
-      .where(eq(users.schoolId, ctx.user.schoolId))
-      .execute();
+      const school = result[0];
+      if (school.isActive) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "School already registered" });
+      }
 
-    const classCount = await db
-      .select()
-      .from(classes)
-      .where(eq(classes.schoolId, ctx.user.schoolId))
-      .execute();
+      await db
+        .update(schools)
+        .set({
+          isActive: true,
+          motto: input.motto,
+          vision: input.vision,
+          logoUrl: input.logoUrl,
+        })
+        .where(eq(schools.id, input.schoolId));
 
-    const studentCount = await db
-      .select()
-      .from(students)
-      .where(eq(students.schoolId, ctx.user.schoolId))
-      .execute();
+      const updated = await db.select().from(schools).where(eq(schools.id, input.schoolId)).limit(1);
 
-    return {
-      school: school[0],
-      stats: {
-        totalUsers: stats.length,
-        totalClasses: classCount.length,
-        totalStudents: studentCount.length,
-        admins: stats.filter((u) => u.role === "school_admin").length,
-        teachers: stats.filter((u) => u.role === "teacher").length,
-      },
-    };
-  }),
+      return {
+        school: updated[0],
+      };
+    }),
 });

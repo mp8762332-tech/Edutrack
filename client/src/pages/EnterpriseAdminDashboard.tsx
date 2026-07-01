@@ -34,7 +34,7 @@ export default function EnterpriseAdminDashboard() {
 
   // Fetch school data
   const { data: school, isLoading: isLoadingSchool } = trpc.schools.getById.useQuery(
-    { id: user?.schoolId || 0 },
+    { schoolId: user?.schoolId || 0 },
     { enabled: !!user?.schoolId }
   );
 

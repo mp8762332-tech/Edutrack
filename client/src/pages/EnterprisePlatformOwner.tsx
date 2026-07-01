@@ -56,7 +56,7 @@ export default function EnterprisePlatformOwner() {
   };
 
   // Create school mutation
-  const createSchoolMutation = trpc.schools.register.useMutation({
+  const createSchoolMutation = trpc.schools.create.useMutation({
     onSuccess: (result: any) => {
       toast.success(`School registered with code: ${result.code}`);
       setShowAddSchool(false);
@@ -89,14 +89,13 @@ export default function EnterprisePlatformOwner() {
     
     setIsGenerating(true);
     try {
-      const code = generateSchoolCode();
       await createSchoolMutation.mutateAsync({
         name: schoolName,
-        code: code,
-        type: schoolType,
-        principalPhone: "",
-        district: "",
+        type: "secondary",
+        ownership: "private",
       });
+    } catch (error) {
+      console.error("Error creating school:", error);
     } finally {
       setIsGenerating(false);
     }
