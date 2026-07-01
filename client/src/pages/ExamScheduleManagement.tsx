@@ -15,6 +15,7 @@ export default function ExamScheduleManagement() {
   const [selectedClass, setSelectedClass] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [selectedInvigilators, setSelectedInvigilators] = useState<number[]>([]);
+  const [invigilatorConflicts, setInvigilatorConflicts] = useState<{ [key: number]: string[] }>({});
   const [newSchedule, setNewSchedule] = useState({
     examDate: "",
     startTime: "08:00",
@@ -30,6 +31,12 @@ export default function ExamScheduleManagement() {
 
   // Fetch timetables for exam schedule
   const { data: examSchedule = [] } = trpc.timetables.getByClass.useQuery(
+    { classId: parseInt(selectedClass) || 0, type: "end_of_term_exam" },
+    { enabled: !!selectedClass }
+  );
+
+  // Fetch all exam schedules to check for conflicts
+  const { data: allExamSchedules = [] } = trpc.timetables.getByClass.useQuery(
     { classId: parseInt(selectedClass) || 0, type: "end_of_term_exam" },
     { enabled: !!selectedClass }
   );
@@ -125,6 +132,52 @@ export default function ExamScheduleManagement() {
     setSelectedInvigilators((prev) =>
       prev.includes(teacherId) ? prev.filter((t) => t !== teacherId) : [...prev, teacherId]
     );
+
+    // Check for conflicts
+    checkInvigilatorConflicts(teacherId, !selectedInvigilators.includes(teacherId));
+  };
+
+  const checkInvigilatorConflicts = (teacherId: number, isAdding: boolean) => {
+    if (!isAdding || !newSchedule.startTime || !newSchedule.endTime) {
+      setInvigilatorConflicts({});
+      return;
+    }
+
+    const newStart = parseInt(newSchedule.startTime.replace(":", ""));
+    const newEnd = parseInt(newSchedule.endTime.replace(":", ""));
+
+    const conflicts: string[] = [];
+
+    // Check all exam schedules for time conflicts
+    examSchedule.forEach((schedule: any) => {
+      if (!schedule.invigilators) return;
+
+      const invigilators = JSON.parse(schedule.invigilators);
+      if (!invigilators.includes(teacherId)) return;
+
+      const existingStart = parseInt(schedule.startTime.replace(":", ""));
+      const existingEnd = parseInt(schedule.endTime.replace(":", ""));
+
+      // Check for time overlap
+      if (newStart < existingEnd && newEnd > existingStart) {
+        const subject = schedule.subject?.name || "Unknown Subject";
+        const room = schedule.room || "TBA";
+        conflicts.push(`${subject} (${schedule.startTime}-${schedule.endTime}) in ${room}`);
+      }
+    });
+
+    if (conflicts.length > 0) {
+      setInvigilatorConflicts((prev) => ({
+        ...prev,
+        [teacherId]: conflicts,
+      }));
+    } else {
+      setInvigilatorConflicts((prev) => {
+        const updated = { ...prev };
+        delete updated[teacherId];
+        return updated;
+      });
+    }
   };
 
   // Calculate exam duration
@@ -273,32 +326,72 @@ export default function ExamScheduleManagement() {
                 <Label className="mb-3 block">Assign Invigilators (Teachers who will supervise)</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto border rounded p-3 bg-white">
                   {teachers.length > 0 ? (
-                    teachers.map((teacher: any) => (
-                      <div key={teacher.id} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`invigilator-${teacher.id}`}
-                          checked={selectedInvigilators.includes(teacher.id)}
-                          onCheckedChange={() => toggleInvigilator(teacher.id)}
-                        />
-                        <Label htmlFor={`invigilator-${teacher.id}`} className="cursor-pointer">
-                          Teacher {teacher.id}
-                        </Label>
-                      </div>
-                    ))
+                    teachers.map((teacher: any) => {
+                      const hasConflict = invigilatorConflicts[teacher.id]?.length > 0;
+                      const isSelected = selectedInvigilators.includes(teacher.id);
+
+                      return (
+                        <div key={teacher.id}>
+                          <div className={`flex items-center gap-2 p-2 rounded ${
+                            hasConflict && isSelected ? "bg-red-50 border border-red-200" : ""
+                          }`}>
+                            <Checkbox
+                              id={`invigilator-${teacher.id}`}
+                              checked={isSelected}
+                              onCheckedChange={() => toggleInvigilator(teacher.id)}
+                            />
+                            <Label htmlFor={`invigilator-${teacher.id}`} className="cursor-pointer flex-1">
+                              Teacher {teacher.id}
+                            </Label>
+                            {hasConflict && isSelected && (
+                              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                            )}
+                          </div>
+                          {hasConflict && isSelected && (
+                            <div className="ml-6 mt-1 text-xs bg-red-50 border-l-2 border-red-600 p-2 rounded">
+                              <p className="font-semibold text-red-700 mb-1">⚠️ Conflict detected:</p>
+                              {invigilatorConflicts[teacher.id].map((conflict, idx) => (
+                                <p key={idx} className="text-red-600 text-xs">
+                                  • {conflict}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
                   ) : (
                     <p className="text-gray-500">No teachers available</p>
                   )}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
                   {selectedInvigilators.length} invigilator(s) selected
+                  {Object.keys(invigilatorConflicts).length > 0 && (
+                    <span className="text-red-600 font-semibold ml-2">
+                      ({Object.keys(invigilatorConflicts).length} with conflicts)
+                    </span>
+                  )}
                 </p>
               </div>
+
+              {/* Conflict Warning */}
+              {Object.keys(invigilatorConflicts).length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded p-3 flex gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-red-700 text-sm">⚠️ Invigilator Conflicts Detected</p>
+                    <p className="text-red-600 text-xs mt-1">
+                      {Object.keys(invigilatorConflicts).length} teacher(s) have overlapping exam duties. Please resolve conflicts before saving.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-2">
                 <Button
                   onClick={handleAddSchedule}
-                  disabled={createScheduleMutation.isPending}
+                  disabled={createScheduleMutation.isPending || Object.keys(invigilatorConflicts).length > 0}
                   className="gap-2 bg-green-600 hover:bg-green-700"
                 >
                   {createScheduleMutation.isPending ? "Creating..." : "Create Schedule"}
