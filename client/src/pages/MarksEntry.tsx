@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Download, Share2, Printer } from "lucide-react";
+import { Download, Share2, Printer, AlertCircle, CheckCircle2, Loader } from "lucide-react";
 import { exportElementToPDF, shareViaWhatsApp } from "@/lib/pdfExport";
 
 export function MarksEntry() {
@@ -18,6 +18,8 @@ export function MarksEntry() {
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [marks, setMarks] = useState<Array<{ studentId: number; paper1: number; paper2: number; comment: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveProgress, setSaveProgress] = useState({ total: 0, saved: 0, failed: 0 });
+  const [showProgress, setShowProgress] = useState(false);
 
   // Fetch real data from database
   const { data: classes = [] } = trpc.classes.list.useQuery({} as any);
@@ -57,6 +59,9 @@ export function MarksEntry() {
     }
 
     setIsSubmitting(true);
+    setShowProgress(true);
+    setSaveProgress({ total: marks.length, saved: 0, failed: 0 });
+
     try {
       const result = await marksMutation.mutateAsync({
         examTypeId: parseInt(selectedExam),
@@ -70,11 +75,14 @@ export function MarksEntry() {
         })),
       });
 
-      toast.success(`Marks entered successfully: ${result.entered} students`);
+      setSaveProgress({ total: marks.length, saved: result.entered || 0, failed: result.failed || 0 });
+      toast.success(`✅ Marks saved successfully: ${result.entered} students`);
       setMarks([]);
+      setTimeout(() => setShowProgress(false), 2000);
     } catch (error: any) {
       toast.error(error?.message || "Failed to enter marks");
       console.error(error);
+      setShowProgress(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -300,23 +308,59 @@ export function MarksEntry() {
           </Card>
         )}
 
+        {/* Progress Indicator */}
+        {showProgress && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  {saveProgress.failed === 0 ? (
+                    <CheckCircle2 className="text-green-600" size={20} />
+                  ) : (
+                    <AlertCircle className="text-orange-600" size={20} />
+                  )}
+                  <span className="font-semibold">
+                    {saveProgress.saved}/{saveProgress.total} marks saved
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(saveProgress.saved / saveProgress.total) * 100}%` }}
+                  />
+                </div>
+                {saveProgress.failed > 0 && (
+                  <p className="text-sm text-orange-700">{saveProgress.failed} failed - check and retry</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-4 flex-wrap">
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
-            {isSubmitting ? "Saving..." : "Save Marks"}
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 gap-2">
+            {isSubmitting ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin" />
+                Saving {saveProgress.saved}/{saveProgress.total}...
+              </>
+            ) : (
+              "Save Marks"
+            )}
           </Button>
 
-          <Button onClick={handleExportPDF} variant="outline" className="gap-2">
+          <Button onClick={handleExportPDF} variant="outline" className="gap-2" disabled={isSubmitting}>
             <Download className="w-4 h-4" />
             Export PDF
           </Button>
 
-          <Button onClick={handleShareWhatsApp} variant="outline" className="gap-2">
+          <Button onClick={handleShareWhatsApp} variant="outline" className="gap-2" disabled={isSubmitting}>
             <Share2 className="w-4 h-4" />
             Share WhatsApp
           </Button>
 
-          <Button onClick={handlePrint} variant="outline" className="gap-2">
+          <Button onClick={handlePrint} variant="outline" className="gap-2" disabled={isSubmitting}>
             <Printer className="w-4 h-4" />
             Print
           </Button>
