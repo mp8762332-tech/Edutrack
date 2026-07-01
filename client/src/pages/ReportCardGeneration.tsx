@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useState, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { ProductionReportCard } from "@/components/ProductionReportCard";
 import { Button } from "@/components/ui/button";
@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Download, Printer, Share2 } from "lucide-react";
+import { Download, Printer, Share2, Loader } from "lucide-react";
 import { exportElementToPDF, shareViaWhatsApp } from "@/lib/pdfExport";
 
 export function ReportCardGeneration() {
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [selectedExam, setSelectedExam] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState(false);
   const reportCardRef = useRef<HTMLDivElement>(null);
 
   // Fetch real data from database
@@ -25,8 +26,14 @@ export function ReportCardGeneration() {
     { enabled: !!selectedClass }
   );
 
-  // Fetch report cards for selected class
-  const { data: reportCards = [] } = trpc.reportCards.getByClass.useQuery(
+  // Fetch marks for selected student
+  const { data: studentMarks = [] } = trpc.marks.getByStudent.useQuery(
+    { studentId: parseInt(selectedStudent) || 0, examTypeId: parseInt(selectedExam) || 0 },
+    { enabled: !!selectedStudent && !!selectedExam }
+  );
+
+  // Fetch all marks for class to calculate position
+  const { data: classMarks = [] } = trpc.marks.getByClass.useQuery(
     { classId: parseInt(selectedClass) || 0, examTypeId: parseInt(selectedExam) || 0 },
     { enabled: !!selectedClass && !!selectedExam }
   );
@@ -40,16 +47,19 @@ export function ReportCardGeneration() {
       return;
     }
 
+    setIsGenerating(true);
     try {
       const result = await generateClassMutation.mutateAsync({
         classId: parseInt(selectedClass),
         examTypeId: parseInt(selectedExam),
       });
 
-      toast.success(`Generated ${result.generated} report cards`);
+      toast.success(`✅ Generated ${result.generated} report cards`);
     } catch (error: any) {
       toast.error(error?.message || "Failed to generate report cards");
       console.error(error);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -71,7 +81,7 @@ export function ReportCardGeneration() {
         orientation: "portrait",
         margin: [15, 15, 15, 15],
       });
-      toast.success("Report card exported as PDF");
+      toast.success("✅ Report card exported as PDF");
     } catch (error: any) {
       toast.error(error?.message || "Failed to export PDF");
       console.error(error);
@@ -98,7 +108,7 @@ export function ReportCardGeneration() {
     const studentData = students.find((s) => s.id === parseInt(selectedStudent));
     const studentName = studentData ? studentData.admissionNumber : selectedStudent;
 
-    const message = `Report Card: ${studentName} - ${className} - ${examName}`;
+    const message = `📊 Report Card: ${studentName} - ${className} - ${examName}\n\nView your detailed report card in EduTrack.`;
     shareViaWhatsApp(message);
   };
 
@@ -122,7 +132,7 @@ export function ReportCardGeneration() {
                   <SelectValue placeholder="Choose class" />
                 </SelectTrigger>
                 <SelectContent>
-                  {classes.map((cls) => (
+                  {classes.map((cls: any) => (
                     <SelectItem key={cls.id} value={cls.id.toString()}>
                       {cls.name}
                     </SelectItem>
@@ -142,7 +152,7 @@ export function ReportCardGeneration() {
                   <SelectValue placeholder="Choose exam" />
                 </SelectTrigger>
                 <SelectContent>
-                  {examTypes.map((exam) => (
+                  {examTypes.map((exam: any) => (
                     <SelectItem key={exam.id} value={exam.id.toString()}>
                       {exam.name}
                     </SelectItem>
@@ -162,7 +172,7 @@ export function ReportCardGeneration() {
                   <SelectValue placeholder="Choose student" />
                 </SelectTrigger>
                 <SelectContent>
-                  {students.map((student) => (
+                  {students.map((student: any) => (
                     <SelectItem key={student.id} value={student.id.toString()}>
                       {student.admissionNumber}
                     </SelectItem>
@@ -175,8 +185,19 @@ export function ReportCardGeneration() {
 
         {/* Action Buttons */}
         <div className="flex gap-4 flex-wrap">
-          <Button onClick={handleGenerateClass} className="bg-blue-600 hover:bg-blue-700">
-            Generate All for Class
+          <Button
+            onClick={handleGenerateClass}
+            disabled={isGenerating || !selectedClass || !selectedExam}
+            className="bg-blue-600 hover:bg-blue-700 gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              "Generate All for Class"
+            )}
           </Button>
 
           <Button onClick={handleExportPDF} variant="outline" className="gap-2" disabled={!selectedStudent}>
@@ -196,35 +217,82 @@ export function ReportCardGeneration() {
         </div>
 
         {/* Report Card Preview */}
-        {selectedStudent && students.length > 0 && (
+        {selectedStudent && studentMarks.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Report Card Preview</CardTitle>
               <CardDescription>A4 format - ready for printing</CardDescription>
             </CardHeader>
             <CardContent className="overflow-auto">
-              <ProductionReportCard
-                ref={reportCardRef}
-                studentName={students.find((s) => s.id === parseInt(selectedStudent))?.admissionNumber || "Student"}
-                admissionNumber={students.find((s) => s.id === parseInt(selectedStudent))?.admissionNumber || "ADM001"}
-                className={classes.find((c) => c.id === parseInt(selectedClass))?.name || "Class"}
-                term="Term 1"
-                year={new Date().getFullYear()}
-                schoolName="EduTrack School"
-                marks={[
-                  { subject: "Mathematics", paper1: 85, paper2: 88, average: 86.5, grade: "A", remark: "Excellent" },
-                  { subject: "English", paper1: 78, paper2: 82, average: 80, grade: "A", remark: "Very Good" },
-                  { subject: "Science", paper1: 92, paper2: 90, average: 91, grade: "A", remark: "Outstanding" },
-                  { subject: "Social Studies", paper1: 75, paper2: 79, average: 77, grade: "B", remark: "Good" },
-                ]}
-                position={3}
-                totalStudents={students.length}
-                averageScore={83.6}
-                teacherComment="Student is performing well across all subjects."
-                principalComment="Keep up the excellent work!"
-                principalName="Principal"
-                classTeacher="Class Teacher"
-              />
+              {(() => {
+                const student = students.find((s: any) => s.id === parseInt(selectedStudent));
+                const marksData = studentMarks.map((mark: any) => ({
+                  subject: mark.subject?.name || "Subject",
+                  paper1: parseFloat(mark.paper1Mark),
+                  paper2: parseFloat(mark.paper2Mark),
+                  average: parseFloat(mark.averageScore),
+                  grade: mark.grade,
+                  remark:
+                    mark.grade === "A"
+                      ? "Excellent"
+                      : mark.grade === "B"
+                        ? "Very Good"
+                        : mark.grade === "C"
+                          ? "Good"
+                          : "Needs Improvement",
+                }));
+
+                const averageScore =
+                  marksData.length > 0 ? marksData.reduce((sum, m) => sum + m.average, 0) / marksData.length : 0;
+
+                // Calculate position based on average score
+                const studentAverages = classMarks.reduce((acc: any, m: any) => {
+                  const studentId = m.studentId;
+                  if (!acc[studentId]) acc[studentId] = [];
+                  acc[studentId].push(parseFloat(m.averageScore));
+                  return acc;
+                }, {});
+
+                const studentAverageList = Object.entries(studentAverages)
+                  .map(([id, scores]: any) => ({
+                    studentId: parseInt(id),
+                    average: scores.reduce((a: number, b: number) => a + b, 0) / scores.length,
+                  }))
+                  .sort((a, b) => b.average - a.average);
+
+                const position = studentAverageList.findIndex((s) => s.studentId === parseInt(selectedStudent)) + 1;
+
+                return (
+                  <ProductionReportCard
+                    ref={reportCardRef}
+                    studentName={student?.admissionNumber || "Student"}
+                    admissionNumber={student?.admissionNumber || "ADM001"}
+                    className={classes.find((c: any) => c.id === parseInt(selectedClass))?.name || "Class"}
+                    term="Term 1"
+                    year={new Date().getFullYear()}
+                    schoolName="EduTrack School"
+                    marks={marksData}
+                    position={position}
+                    totalStudents={students.length}
+                    averageScore={averageScore}
+                    teacherComment="Student is performing well. Keep up the good work!"
+                    principalComment="Excellent performance. Continue with the same dedication."
+                    principalName="Principal"
+                    classTeacher="Class Teacher"
+                  />
+                );
+              })()}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* No Marks Message */}
+        {selectedStudent && studentMarks.length === 0 && selectedExam && (
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardContent className="pt-6">
+              <p className="text-yellow-800">
+                📋 No marks found for this student in the selected exam. Please enter marks first.
+              </p>
             </CardContent>
           </Card>
         )}
