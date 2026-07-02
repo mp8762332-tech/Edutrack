@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, AlertCircle, CheckCircle2, Calendar, Clock } from "lucide-react";
+import { Plus, Trash2, Save, AlertCircle, CheckCircle2, Calendar, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { ExamCalendar } from "@/components/ExamCalendar";
 
 export default function ExamScheduleManagement() {
   const [selectedExam, setSelectedExam] = useState("");
@@ -16,6 +17,8 @@ export default function ExamScheduleManagement() {
   const [isAdding, setIsAdding] = useState(false);
   const [selectedInvigilators, setSelectedInvigilators] = useState<number[]>([]);
   const [invigilatorConflicts, setInvigilatorConflicts] = useState<{ [key: number]: string[] }>({});
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [viewMode, setViewMode] = useState<"calendar" | "table">("calendar");
   const [newSchedule, setNewSchedule] = useState({
     examDate: "",
     startTime: "08:00",
